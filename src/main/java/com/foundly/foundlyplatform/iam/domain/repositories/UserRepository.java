@@ -9,7 +9,6 @@ import java.util.Optional;
 /**
  * IAM user repository port.
  */
-@Repository
 public interface UserRepository {
     Optional<User> findById(Long id);
 

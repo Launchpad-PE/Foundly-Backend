@@ -10,7 +10,6 @@ import java.util.Optional;
 /**
  * IAM role repository port.
  */
-@Repository
 public interface RoleRepository {
     Optional<Role> findByName(Roles name);
 
