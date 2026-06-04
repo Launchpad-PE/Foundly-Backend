@@ -58,7 +58,7 @@ public class UserCommandServiceImpl implements UserCommandService {
                 .map(java.util.Optional::get)
                 .toList();
 
-        var user = new User(command.username(), hashingService.encode(command.password()), resolvedRoles);
+        var user = new User(command.username(), hashingService.encode(command.password()), command.email(), resolvedRoles);
         userRepository.save(user);
         return userRepository.findByUsername(command.username())
                 .<Result<User, ApplicationError>>map(Result::success)

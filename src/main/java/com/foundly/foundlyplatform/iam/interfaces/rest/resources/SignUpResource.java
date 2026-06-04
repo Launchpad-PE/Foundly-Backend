@@ -30,6 +30,14 @@ public record SignUpResource(
         String password,
 
         @Schema(
+                description = "User email",
+                example = "john.doe@example.com",
+                minLength = 5,
+                maxLength = 100
+        )
+        String email,
+
+        @Schema(
                 description = "Roles to assign to the user",
                 example = "[\"ROLE_USER\"]"
         )

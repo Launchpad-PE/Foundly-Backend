@@ -31,10 +31,11 @@ public class IamContextFacade {
      *
      * @param username username to register
      * @param password raw password
+     * @param email user's email
      * @return created user identifier, or {@code 0L} when creation fails
      */
-    public Long createUser(String username, String password) {
-        var signUpCommand = new SignUpCommand(username, password, List.of(Role.getDefaultRole()));
+    public Long createUser(String username, String password, String email) {
+        var signUpCommand = new SignUpCommand(username, password, email, List.of(Role.getDefaultRole())); // Añadido email
         var result = userCommandService.handle(signUpCommand);
         if (result instanceof com.foundly.foundlyplatform.shared.application.result.Result.Success(var user)) {
             return user.getId();
@@ -47,12 +48,13 @@ public class IamContextFacade {
      *
      * @param username username to register
      * @param password raw password
+     * @param email user's email
      * @param roleNames role names to assign; unknown names are ignored
      * @return created user identifier, or {@code 0L} when creation fails
      */
-    public Long createUser(String username, String password, List<String> roleNames) {
+    public Long createUser(String username, String password, String email, List<String> roleNames) {
         var roles = roleNames != null ? roleNames.stream().map(Role::toRoleFromName).toList() : new ArrayList<Role>();
-        var signUpCommand = new SignUpCommand(username, password, roles);
+        var signUpCommand = new SignUpCommand(username, password, email, roles);
         var result = userCommandService.handle(signUpCommand);
         if (result instanceof com.foundly.foundlyplatform.shared.application.result.Result.Success(var user)) {
             return user.getId();

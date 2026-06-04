@@ -1,7 +1,6 @@
 package com.foundly.foundlyplatform.iam.domain.repositories;
 
 import com.foundly.foundlyplatform.iam.domain.model.aggregates.User;
-import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;

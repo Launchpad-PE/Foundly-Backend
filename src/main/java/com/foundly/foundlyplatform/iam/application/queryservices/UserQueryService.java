@@ -2,6 +2,7 @@ package com.foundly.foundlyplatform.iam.application.queryservices;
 
 import com.foundly.foundlyplatform.iam.domain.model.aggregates.User;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetAllUsersQuery;
+import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByEmailQuery;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByIdQuery;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByUsernameQuery;
 
@@ -35,5 +36,13 @@ public interface UserQueryService {
      * @return matching user, if found
      */
     Optional<User> handle(GetUserByUsernameQuery query);
+
+    /**
+     * Handles retrieval of a user by email.
+     *
+     * @param query username query
+     * @return matching user, if found
+     */
+    Optional<User> handle(GetUserByEmailQuery query);
 
 }

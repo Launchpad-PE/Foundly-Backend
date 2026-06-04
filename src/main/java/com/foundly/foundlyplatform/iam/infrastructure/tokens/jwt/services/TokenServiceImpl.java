@@ -38,17 +38,6 @@ public class TokenServiceImpl implements BearerTokenService {
     private int expirationDays;
 
     /**
-     * This method generates a JWT token from an authentication object
-     * @param authentication the authentication object
-     * @return String the JWT token
-     * @see Authentication
-     */
-    @Override
-    public String generateToken(Authentication authentication) {
-        return buildTokenWithDefaultParameters(authentication.getName());
-    }
-
-    /**
      * This method generates a JWT token from a username
      * @param username the username
      * @return String the JWT token
@@ -161,6 +150,16 @@ public class TokenServiceImpl implements BearerTokenService {
         String parameter = getAuthorizationParameterFrom(request);
         if (isTokenPresentIn(parameter) && isBearerTokenIn(parameter)) return extractTokenFrom(parameter);
         return null;
+    }
+    /**
+     * This method generates a JWT token from an authentication object
+     * @param authentication the authentication object
+     * @return String the JWT token
+     * @see Authentication
+     */
+    @Override
+    public String generateToken(Authentication authentication) {
+        return buildTokenWithDefaultParameters(authentication.getName());
     }
 
 }

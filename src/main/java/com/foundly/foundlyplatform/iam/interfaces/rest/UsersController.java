@@ -2,6 +2,7 @@ package com.foundly.foundlyplatform.iam.interfaces.rest;
 
 import com.foundly.foundlyplatform.iam.application.queryservices.UserQueryService;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetAllUsersQuery;
+import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByEmailQuery;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByIdQuery;
 import com.foundly.foundlyplatform.iam.interfaces.rest.resources.UserResource;
 import com.foundly.foundlyplatform.iam.interfaces.rest.transform.UserResourceFromEntityAssembler;
@@ -37,7 +38,6 @@ public class UsersController {
 
     /**
      * Retrieves all users.
-     *
      * @return list of user resources
      * @see UserResource
      */
@@ -65,7 +65,6 @@ public class UsersController {
 
     /**
      * Retrieves a user by identifier.
-     *
      * @param userId user identifier
      * @return user resource when found
      * @see UserResource
@@ -97,6 +96,45 @@ public class UsersController {
     ) {
         var getUserByIdQuery = new GetUserByIdQuery(userId);
         var user = userQueryService.handle(getUserByIdQuery);
+        if (user.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        var userResource = UserResourceFromEntityAssembler.toResourceFromEntity(user.get());
+        return ResponseEntity.ok(userResource);
+    }
+
+    /**
+     * Retrieves a user by email.
+     * @param email user email
+     * @return user resource when found
+     * @see UserResource
+     */
+    @GetMapping(value = "/{email}")
+    @Operation(
+            summary = "Get user by email",
+            description = "Retrieves a specific user's information by unique email.",
+            security = @SecurityRequirement(name = "bearerAuth")
+    )
+    @ApiResponses(value = {
+            @ApiResponse(
+                    responseCode = "200",
+                    description = "User retrieved successfully",
+                    content = @Content(schema = @Schema(implementation = UserResource.class))
+            ),
+            @ApiResponse(responseCode = "401", description = "Unauthorized - JWT token required or invalid"),
+            @ApiResponse(responseCode = "403", description = "Forbidden - Insufficient permissions"),
+            @ApiResponse(responseCode = "404", description = "User not found")
+    })
+    public ResponseEntity<UserResource> getUserByEmail(
+            @PathVariable
+            @Parameter(
+                    description = "Unique user email",
+                    example= "Jhon_Doe@gmail.com",
+                    required = true
+            )
+            String email) {
+        var getUserByEmailQuery = new GetUserByEmailQuery(email);
+        var user = userQueryService.handle(getUserByEmailQuery);
         if (user.isEmpty()) {
             return ResponseEntity.notFound().build();
         }

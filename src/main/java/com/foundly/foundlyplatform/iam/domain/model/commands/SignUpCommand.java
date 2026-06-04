@@ -10,8 +10,9 @@ import java.util.List;
  * </p>
  * @param username the username of the user
  * @param password the password of the user
+ * @param email the email of the user
  * @param roles the roles of the user
  *
  * @see com.foundly.foundlyplatform.iam.domain.model.aggregates.User
  */
-public record SignUpCommand(String username, String password, List<Role> roles) {}
+public record SignUpCommand(String username, String password, String email, List<Role> roles) {}

@@ -1,6 +1,7 @@
 package com.foundly.foundlyplatform.iam.domain.model.aggregates;
 
 import com.foundly.foundlyplatform.iam.domain.model.entities.Role;
+import com.foundly.foundlyplatform.iam.domain.model.entities.Role;
 import com.foundly.foundlyplatform.shared.domain.model.aggregates.AbstractDomainAggregateRoot;
 import lombok.Getter;
 import lombok.Setter;
@@ -20,20 +21,24 @@ public class User extends AbstractDomainAggregateRoot<User> {
     private String password;
 
     @Setter
+    private String email;
+
+    @Setter
     private Set<Role> roles;
 
     public User() {
         this.roles = new HashSet<>();
     }
 
-    public User(String password, String username) {
+    public User(String password, String username, String email) {
         this.password = password;
         this.username = username;
+        this.email = email;
         this.roles = new HashSet<>();
     }
 
-    public User(String username, String password, List<Role> roles) {
-        this(username, password);
+    public User(String username, String password, String email, List<Role> roles) {
+        this(password, username, email);
         addRoles(roles);
     }
 
