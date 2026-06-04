@@ -87,5 +87,4 @@ public class IamContextFacade {
         if (result.isEmpty()) return Strings.EMPTY;
         return result.get().getUsername();
     }
-
 }

@@ -11,7 +11,9 @@ import com.foundly.foundlyplatform.iam.domain.repositories.UserRepository;
 import com.foundly.foundlyplatform.shared.application.result.ApplicationError;
 import com.foundly.foundlyplatform.shared.application.result.Result;
 import org.apache.commons.lang3.tuple.ImmutablePair;
+import org.springframework.stereotype.Service;
 
+@Service
 public class UserCommandServiceImpl implements UserCommandService {
     private final UserRepository userRepository;
     private final HashingService hashingService;
