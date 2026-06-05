@@ -109,7 +109,7 @@ public class UsersController {
      * @return user resource when found
      * @see UserResource
      */
-    @GetMapping(value = "/{email}")
+    @GetMapping(value = "/email/{email}")
     @Operation(
             summary = "Get user by email",
             description = "Retrieves a specific user's information by unique email.",

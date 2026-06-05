@@ -10,7 +10,7 @@ import java.util.List;
 @Schema(
         name = "SignUpRequest",
         description = "User sign-up request with credentials and roles",
-        example = "{\"username\": \"john.doe\", \"password\": \"SecurePass123!\", \"roles\": [\"ROLE_USER\"]}"
+        example = "{\"username\": \"john.doe\", \"password\": \"SecurePass123!\",\"email\": \"john.doe@example.com\", \"roles\": [\"ROLE_USER\"]}"
 )
 public record SignUpResource(
         @Schema(
