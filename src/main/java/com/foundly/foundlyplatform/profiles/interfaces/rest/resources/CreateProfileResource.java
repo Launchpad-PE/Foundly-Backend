@@ -6,6 +6,10 @@ import jakarta.validation.constraints.NotNull;
 public record CreateProfileResource(
         @NotNull String userId,
         @NotBlank String username,
+        String avatar,
         @NotBlank String bio,
-        @NotBlank String role
+        @NotBlank String role,
+        java.util.List<String> skills,
+        java.util.List<ExperienceResource> experiences,
+        Boolean isComplete
 ) {}

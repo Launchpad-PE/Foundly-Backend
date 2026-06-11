@@ -33,6 +33,11 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
                 Role.of(command.role())
         );
 
+        if (command.avatar() != null)              profile.updateAvatar(command.avatar());
+        if (!command.skills().isEmpty())           profile.updateSkills(command.skills());
+        if (!command.experiences().isEmpty())      profile.updateExperiences(command.experiences());
+        if (command.isComplete())                  profile.setComplete(true);
+
         return Optional.of(profileRepository.save(profile));
     }
 
