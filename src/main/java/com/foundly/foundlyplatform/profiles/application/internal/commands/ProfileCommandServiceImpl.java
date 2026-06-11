@@ -48,6 +48,21 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     }
 
     @Override
+    public Optional<Profile> handle(PatchProfileCommand command) {
+        return profileRepository.findById(command.profileId()).map(profile -> {
+            if (command.username() != null)           profile.updateUsername(command.username());
+            if (command.avatar() != null)             profile.updateAvatar(command.avatar());
+            if (command.bio() != null)                profile.updateBio(command.bio());
+            if (command.role() != null)               profile.updateRole(command.role());
+            if (command.skills() != null)             profile.updateSkills(command.skills());
+            if (command.experiences() != null)        profile.updateExperiences(command.experiences());
+            if (command.favoriteProjectIds() != null) profile.updateFavoriteProjectIds(command.favoriteProjectIds());
+            if (command.isComplete() != null)         profile.setComplete(command.isComplete());
+            return profileRepository.save(profile);
+        });
+    }
+
+    @Override
     public void deleteProfile(Long profileId) {
         if (!profileRepository.existsById(profileId))
             throw new IllegalArgumentException("Perfil no encontrado con id: " + profileId);

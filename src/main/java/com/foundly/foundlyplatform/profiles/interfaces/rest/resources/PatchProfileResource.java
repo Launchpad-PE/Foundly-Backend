@@ -2,9 +2,7 @@ package com.foundly.foundlyplatform.profiles.interfaces.rest.resources;
 
 import java.util.List;
 
-public record ProfileResource(
-        Long id,
-        Long userId,
+public record PatchProfileResource(
         String username,
         String avatar,
         String bio,
@@ -12,5 +10,5 @@ public record ProfileResource(
         List<String> skills,
         List<ExperienceResource> experiences,
         List<String> favoriteProjectIds,
-        boolean isComplete
+        Boolean isComplete
 ) {}

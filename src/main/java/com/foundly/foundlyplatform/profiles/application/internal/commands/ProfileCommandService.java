@@ -10,5 +10,7 @@ public interface ProfileCommandService {
 
     Optional<Profile> handle(UpdateProfileCommand command);
 
+    Optional<Profile> handle(PatchProfileCommand command);
+
     void deleteProfile(Long profileId);
 }

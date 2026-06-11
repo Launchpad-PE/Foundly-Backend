@@ -1,12 +1,15 @@
 package com.foundly.foundlyplatform.profiles.interfaces;
 
 
+import com.foundly.foundlyplatform.profiles.application.internal.commands.PatchProfileCommand;
 import com.foundly.foundlyplatform.profiles.application.internal.commands.ProfileCommandService;
 import com.foundly.foundlyplatform.profiles.application.internal.commands.UpdateProfileCommand;
 import com.foundly.foundlyplatform.profiles.application.internal.queries.GetProfileByIdQuery;
 import com.foundly.foundlyplatform.profiles.application.internal.queries.GetProfileByUserIdQuery;
 import com.foundly.foundlyplatform.profiles.application.internal.queries.ProfileQueryService;
+import com.foundly.foundlyplatform.profiles.domain.model.entities.Experience;
 import com.foundly.foundlyplatform.profiles.interfaces.rest.resources.CreateProfileResource;
+import com.foundly.foundlyplatform.profiles.interfaces.rest.resources.PatchProfileResource;
 import com.foundly.foundlyplatform.profiles.interfaces.rest.resources.ProfileResource;
 import com.foundly.foundlyplatform.profiles.interfaces.rest.resources.UpdateProfileResource;
 import com.foundly.foundlyplatform.profiles.interfaces.rest.transform.CreateProfileCommandFromAssembler;
@@ -17,6 +20,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -77,6 +81,29 @@ public class ProfilesController {
                                                          @RequestBody UpdateProfileResource resource) {
         var command = new UpdateProfileCommand(id, resource.username(), resource.avatar(),
                 resource.bio(), resource.role());
+        return profileCommandService.handle(command)
+                .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // PATCH /api/v1/profiles/{id}
+    @PatchMapping("/{id}")
+    public ResponseEntity<ProfileResource> patchProfile(@PathVariable Long id,
+                                                        @RequestBody PatchProfileResource resource) {
+        List<Experience> experiences = null;
+        if (resource.experiences() != null) {
+            experiences = resource.experiences().stream()
+                    .map(e -> new Experience(
+                            e.id(), e.title(), e.company(), e.period(), e.description(), e.current(),
+                            e.startDate() != null ? LocalDate.parse(e.startDate()) : null,
+                            e.endDate()   != null ? LocalDate.parse(e.endDate())   : null
+                    ))
+                    .toList();
+        }
+        var command = new PatchProfileCommand(id, resource.username(), resource.avatar(),
+                resource.bio(), resource.role(), resource.skills(), experiences,
+                resource.favoriteProjectIds(), resource.isComplete());
         return profileCommandService.handle(command)
                 .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)

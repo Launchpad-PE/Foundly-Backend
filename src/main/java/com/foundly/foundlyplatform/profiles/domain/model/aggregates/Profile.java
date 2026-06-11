@@ -80,7 +80,26 @@ public class Profile extends AuditableAbstractPersistenceEntity {
 
     public void addSkill(String skill){
         if(!this.skills.contains(skill))
-            this.skills.remove(skill);
+            this.skills.add(skill);
+    }
+
+    public void updateSkills(List<String> newSkills) {
+        this.skills.clear();
+        this.skills.addAll(newSkills);
+    }
+
+    public void updateExperiences(List<Experience> newExperiences) {
+        this.experiences.clear();
+        this.experiences.addAll(newExperiences);
+    }
+
+    public void updateFavoriteProjectIds(List<String> newIds) {
+        this.favoriteProjectIds.clear();
+        this.favoriteProjectIds.addAll(newIds);
+    }
+
+    public void setComplete(boolean complete) {
+        this.isComplete = complete;
     }
 
     public void removeSkill(String skill) {
