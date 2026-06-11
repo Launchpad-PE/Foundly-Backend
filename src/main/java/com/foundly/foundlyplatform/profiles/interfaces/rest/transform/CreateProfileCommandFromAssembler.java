@@ -6,7 +6,7 @@ public class CreateProfileCommandFromAssembler {
 
     public static CreateProfileCommand toCommandFromResource(CreateProfileResource resource) {
         return new CreateProfileCommand(
-                resource.userId(),
+                Long.parseLong(resource.userId()),
                 resource.username(),
                 resource.bio(),
                 resource.role()

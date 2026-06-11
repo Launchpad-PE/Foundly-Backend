@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 
 public record CreateProfileResource(
-        @NotNull Long userId,
+        @NotNull String userId,
         @NotBlank String username,
         @NotBlank String bio,
         @NotBlank String role
