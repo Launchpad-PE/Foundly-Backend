@@ -51,6 +51,12 @@ public class ProjectAssembler {
         entity.setAuthorId(domain.getAuthorId());
         entity.setAuthorName(domain.getAuthorName());
 
+        // AGREGAR LA CONVERSIÓN DE ROLES
+        var roles = domain.getRoles().stream()
+                .map(role -> ProjectRoleAssembler.toJpaFromDomain(role, domain.getProjectIdValue()))
+                .collect(Collectors.toList());
+        entity.setRoles(roles);
+
         return entity;
     }
 }
