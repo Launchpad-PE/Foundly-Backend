@@ -22,14 +22,14 @@ public class ProjectRoleJpaEntity {
     @Column(name = "project_id")
     private String projectId;
 
-    @Column(name = "role_name", nullable = false)
+    @Column(name = "role_name_value", nullable = false)
     private String roleName;
 
-    @Column(name = "card_title", nullable = false)
+    @Column(name = "card_title_value", nullable = false)
     private String cardTitle;
 
     @ElementCollection
     @CollectionTable(name = "project_role_items", joinColumns = @JoinColumn(name = "role_id"))
-    @Column(name = "item")
+    @Column(name = "item_description")
     private List<String> items = new ArrayList<>();
 }
