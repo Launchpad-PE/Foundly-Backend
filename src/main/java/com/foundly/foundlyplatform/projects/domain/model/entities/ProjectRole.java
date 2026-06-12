@@ -3,9 +3,7 @@ package com.foundly.foundlyplatform.projects.domain.model.entities;
 import com.foundly.foundlyplatform.projects.domain.model.valueobjects.CardItem;
 import com.foundly.foundlyplatform.projects.domain.model.valueobjects.CardTitle;
 import com.foundly.foundlyplatform.projects.domain.model.valueobjects.RoleName;
-import jakarta.persistence.Entity;
 import jakarta.persistence.*;
-import jakarta.persistence.Table;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
@@ -25,9 +23,15 @@ public class ProjectRole {
     private Long id;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "role_name_value", nullable = false))
+    })
     private RoleName name;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "card_title_value", nullable = false))
+    })
     private CardTitle cardTitle;
 
     @ElementCollection

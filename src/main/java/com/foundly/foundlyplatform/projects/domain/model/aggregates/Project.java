@@ -18,12 +18,21 @@ import java.util.List;
 public class Project extends AuditableAbstractPersistenceEntity {
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "project_id_value", nullable = false, unique = true))
+    })
     private ProjectId projectId;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "name_value", nullable = false, length = 100))
+    })
     private ProjectName name;
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "area_value", nullable = false))
+    })
     private Area area;
 
     @ElementCollection
@@ -32,6 +41,9 @@ public class Project extends AuditableAbstractPersistenceEntity {
     private List<Tag> tags = new ArrayList<>();
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "summary_value", nullable = false, length = 500))
+    })
     private Summary summary;
 
     @ElementCollection
@@ -41,18 +53,23 @@ public class Project extends AuditableAbstractPersistenceEntity {
     private List<EnvironmentalMetric> environmentalMetrics = new ArrayList<>();
 
     @Embedded
+    @AttributeOverrides({
+            @AttributeOverride(name = "value", column = @Column(name = "academic_level_value"))
+    })
     private AcademicLevel academicLevel;
 
     @ElementCollection
     @CollectionTable(name = "project_benefits", joinColumns = @JoinColumn(name = "project_id"))
+    @Column(name = "benefit_description")
     private List<Benefit> benefits = new ArrayList<>();
 
     @ElementCollection
     @CollectionTable(name = "project_skills", joinColumns = @JoinColumn(name = "project_id"))
+    @Column(name = "skill_name")
     private List<Skill> requiredSkills = new ArrayList<>();
 
     @Embedded
-    private Duration duration;
+    private Duration duration;  // Este ya tiene amount y type, no causa conflicto
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
     @JoinColumn(name = "project_id")

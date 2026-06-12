@@ -64,10 +64,10 @@ public class ProjectJpaEntity extends AuditableAbstractPersistenceEntity {
     @Enumerated(EnumType.STRING)
     private ProjectStatus status;
 
-    @Column(name = "author_id", nullable = false)
+    @Column(name = "project_author_id", nullable = false)
     private Long authorId;
 
-    @Column(name = "author_name")
+    @Column(name = "project_author_name")
     private String authorName;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
