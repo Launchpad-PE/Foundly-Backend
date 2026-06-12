@@ -17,13 +17,13 @@ import java.util.List;
 @NoArgsConstructor
 public class ProjectJpaEntity extends AuditableAbstractPersistenceEntity {
 
-    @Column(name = "project_id", nullable = false, unique = true)
+    @Column(name = "project_id_value", nullable = false, unique = true)
     private String projectId;
 
-    @Column(name = "name", nullable = false, length = 100)
+    @Column(name = "name_value", nullable = false, length = 100)
     private String name;
 
-    @Column(name = "area", nullable = false)
+    @Column(name = "area_value", nullable = false)
     private String area;
 
     @ElementCollection
@@ -31,7 +31,8 @@ public class ProjectJpaEntity extends AuditableAbstractPersistenceEntity {
     @Column(name = "tag")
     private List<String> tags = new ArrayList<>();
 
-    @Column(name = "summary", nullable = false, length = 500)
+    // ✅ CAMBIA "area_value" a "summary_value"
+    @Column(name = "summary_value", nullable = false, length = 500)
     private String summary;
 
     @ElementCollection
@@ -40,7 +41,7 @@ public class ProjectJpaEntity extends AuditableAbstractPersistenceEntity {
     @Enumerated(EnumType.STRING)
     private List<EnvironmentalMetric> environmentalMetrics = new ArrayList<>();
 
-    @Column(name = "academic_level")
+    @Column(name = "academic_level_value")  // ← Cambiar para consistencia
     private String academicLevel;
 
     @ElementCollection
