@@ -1,7 +1,6 @@
 package com.foundly.foundlyplatform.projects.interfaces.rest;
 
 import com.foundly.foundlyplatform.iam.application.queryservices.UserQueryService;
-import com.foundly.foundlyplatform.iam.domain.model.aggregates.User;
 import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.foundly.foundlyplatform.projects.applications.ProjectCommandService;
 import com.foundly.foundlyplatform.projects.applications.ProjectQueryService;
@@ -32,20 +31,20 @@ public class ProjectsController {
 
     private final ProjectCommandService projectCommandService;
     private final ProjectQueryService projectQueryService;
-    private final UserQueryService userQueryService;  // ✅ Agregar
+    private final UserQueryService userQueryService;
 
     public ProjectsController(ProjectCommandService projectCommandService,
                               ProjectQueryService projectQueryService,
-                              UserQueryService userQueryService) {  // ✅ Agregar parámetro
+                              UserQueryService userQueryService) {
         this.projectCommandService = projectCommandService;
         this.projectQueryService = projectQueryService;
-        this.userQueryService = userQueryService;  // ✅ Inicializar
+        this.userQueryService = userQueryService;
     }
 
     private Long getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
         if (auth != null && auth.isAuthenticated()) {
-            String username = auth.getName();  // Obtener el username del token
+            String username = auth.getName();
             var userQuery = new GetUserByUsernameQuery(username);
             var user = userQueryService.handle(userQuery);
             if (user.isPresent()) {
@@ -63,7 +62,6 @@ public class ProjectsController {
         return null;
     }
 
-    // GET /api/v1/projects
     @GetMapping
     @Operation(summary = "Get all published projects")
     public ResponseEntity<List<ProjectResource>> getAllPublishedProjects() {
@@ -75,7 +73,6 @@ public class ProjectsController {
         return ResponseEntity.ok(resources);
     }
 
-    // GET /api/v1/projects/me
     @GetMapping("/me")
     @Operation(summary = "Get current user's projects")
     public ResponseEntity<List<ProjectResource>> getMyProjects() {
@@ -88,7 +85,6 @@ public class ProjectsController {
         return ResponseEntity.ok(resources);
     }
 
-    // GET /api/v1/projects/{id}
     @GetMapping("/{id}")
     @Operation(summary = "Get project by ID")
     public ResponseEntity<ProjectResource> getProjectById(@PathVariable String id) {
@@ -99,7 +95,6 @@ public class ProjectsController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // GET /api/v1/projects/area/{area}
     @GetMapping("/area/{area}")
     @Operation(summary = "Get projects by area")
     public ResponseEntity<List<ProjectResource>> getProjectsByArea(@PathVariable String area) {
@@ -111,10 +106,11 @@ public class ProjectsController {
         return ResponseEntity.ok(resources);
     }
 
-    // POST /api/v1/projects
     @PostMapping
     @Operation(summary = "Create a new project")
     public ResponseEntity<ProjectResource> createProject(@Valid @RequestBody CreateProjectResource resource) {
+        System.out.println("🔍 [CONTROLLER] environmental_impact recibido: " + resource.getEnvironmentalImpact());
+
         var userId = getCurrentUserId();
         var username = getCurrentUsername();
         var command = CreateProjectCommandFromResourceAssembler.toCommandFromResource(resource, userId, username);
@@ -125,13 +121,11 @@ public class ProjectsController {
                 .orElse(ResponseEntity.badRequest().build());
     }
 
-    // PATCH /api/v1/projects/{id}
     @PatchMapping("/{id}")
     @Operation(summary = "Update a project partially")
     public ResponseEntity<ProjectResource> patchProject(@PathVariable String id,
                                                         @RequestBody PatchProjectResource resource) {
 
-        // Convertir List<String> a List<EnvironmentalMetric> correctamente
         List<EnvironmentalMetric> environmentalMetrics = null;
         if (resource.environmentalMetrics() != null) {
             environmentalMetrics = resource.environmentalMetrics().stream()
@@ -139,7 +133,6 @@ public class ProjectsController {
                         try {
                             return EnvironmentalMetric.valueOf(metricName);
                         } catch (IllegalArgumentException e) {
-                            // Si no es un valor válido, puedes ignorarlo o lanzar excepción
                             return null;
                         }
                     })
@@ -147,25 +140,21 @@ public class ProjectsController {
                     .collect(Collectors.toList());
         }
 
-        //  Convertir durationType
         DurationType durationType = null;
         if (resource.durationType() != null) {
             try {
                 durationType = DurationType.valueOf(resource.durationType().toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Valor inválido, ignorar
-                return null;
+                return ResponseEntity.badRequest().build();
             }
         }
 
-        // Convertir status
         ProjectStatus status = null;
         if (resource.status() != null) {
             try {
                 status = ProjectStatus.valueOf(resource.status().toUpperCase());
             } catch (IllegalArgumentException e) {
-                // Valor inválido, ignorar
-                return null;
+                return ResponseEntity.badRequest().build();
             }
         }
 
@@ -190,19 +179,16 @@ public class ProjectsController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // PATCH /api/v1/projects/{id}/publish
     @PatchMapping("/{id}/publish")
     @Operation(summary = "Publish a project")
     public ResponseEntity<ProjectResource> publishProject(@PathVariable String id) {
         var command = new PublishProjectCommand(id);
-
         return projectCommandService.handle(command)
                 .map(ProjectResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // POST /api/v1/projects/{id}/roles
     @PostMapping("/{id}/roles")
     @Operation(summary = "Add a role to a project")
     public ResponseEntity<ProjectResource> addRole(@PathVariable String id,
@@ -213,20 +199,17 @@ public class ProjectsController {
                 resource.cardInfo().items().stream().map(CardItem::of).toList()
         );
         var command = new AddRoleCommand(id, role);
-
         return projectCommandService.handle(command)
                 .map(ProjectResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // DELETE /api/v1/projects/{id}/roles/{roleId}
     @DeleteMapping("/{id}/roles/{roleId}")
     @Operation(summary = "Remove a role from a project")
     public ResponseEntity<ProjectResource> removeRole(@PathVariable String id,
                                                       @PathVariable Long roleId) {
         var command = new RemoveRoleCommand(id, roleId);
-
         return projectCommandService.handle(command)
                 .map(ProjectResourceFromEntityAssembler::toResourceFromEntity)
                 .map(ResponseEntity::ok)

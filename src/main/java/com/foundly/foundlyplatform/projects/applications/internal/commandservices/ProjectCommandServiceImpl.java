@@ -20,6 +20,17 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public Optional<Project> handle(CreateProjectCommand command) {
+        // 🔍 LOG PARA VER QUÉ LLEGA AL BACKEND
+        System.out.println("🔍 [BACKEND] environmentalMetrics recibidos: " + command.environmentalMetrics());
+        System.out.println("🔍 [BACKEND] environmentalMetrics size: " +
+                (command.environmentalMetrics() != null ? command.environmentalMetrics().size() : "null"));
+
+        if (command.environmentalMetrics() != null) {
+            for (EnvironmentalMetric metric : command.environmentalMetrics()) {
+                System.out.println("🔍 [BACKEND] Métrica: " + metric);
+            }
+        }
+
         var project = Project.create(
                 command.name(),
                 command.area(),
@@ -35,6 +46,9 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 command.authorId(),
                 command.authorName()
         );
+
+        System.out.println("🔍 [BACKEND] Proyecto creado con environmentalMetrics: " + project.getEnvironmentalMetrics());
+
 
         return Optional.of(projectRepository.save(project));
     }
