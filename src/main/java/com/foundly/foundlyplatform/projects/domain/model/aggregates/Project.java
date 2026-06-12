@@ -96,6 +96,9 @@ public class Project extends AuditableAbstractPersistenceEntity {
             Long authorId,
             String authorName
     ) {
+        System.out.println("🔍 [PROJECT CONSTRUCTOR] environmentalMetrics recibidas: " + environmentalMetrics);
+        System.out.println("🔍 [PROJECT CONSTRUCTOR] environmentalMetrics size: " + (environmentalMetrics != null ? environmentalMetrics.size() : 0));
+
         this.projectId = projectId;
         this.name = name;
         this.area = area;
