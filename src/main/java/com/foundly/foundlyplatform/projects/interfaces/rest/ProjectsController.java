@@ -1,6 +1,8 @@
 package com.foundly.foundlyplatform.projects.interfaces.rest;
 
+import com.foundly.foundlyplatform.iam.application.queryservices.UserQueryService;
 import com.foundly.foundlyplatform.iam.domain.model.aggregates.User;
+import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.foundly.foundlyplatform.projects.applications.ProjectCommandService;
 import com.foundly.foundlyplatform.projects.applications.ProjectQueryService;
 import com.foundly.foundlyplatform.projects.domain.model.commands.*;
@@ -30,25 +32,33 @@ public class ProjectsController {
 
     private final ProjectCommandService projectCommandService;
     private final ProjectQueryService projectQueryService;
+    private final UserQueryService userQueryService;  // ✅ Agregar
 
     public ProjectsController(ProjectCommandService projectCommandService,
-                              ProjectQueryService projectQueryService) {
+                              ProjectQueryService projectQueryService,
+                              UserQueryService userQueryService) {  // ✅ Agregar parámetro
         this.projectCommandService = projectCommandService;
         this.projectQueryService = projectQueryService;
+        this.userQueryService = userQueryService;  // ✅ Inicializar
     }
 
     private Long getCurrentUserId() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User user) {
-            return user.getId();
+        if (auth != null && auth.isAuthenticated()) {
+            String username = auth.getName();  // Obtener el username del token
+            var userQuery = new GetUserByUsernameQuery(username);
+            var user = userQueryService.handle(userQuery);
+            if (user.isPresent()) {
+                return user.get().getId();
+            }
         }
         throw new IllegalStateException("User not authenticated");
     }
 
     private String getCurrentUsername() {
         var auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth != null && auth.getPrincipal() instanceof User user) {
-            return user.getUsername();
+        if (auth != null && auth.isAuthenticated()) {
+            return auth.getName();
         }
         return null;
     }
