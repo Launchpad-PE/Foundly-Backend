@@ -69,4 +69,8 @@ public class ProjectJpaEntity extends AuditableAbstractPersistenceEntity {
 
     @Column(name = "author_name")
     private String authorName;
+
+    @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
+    @JoinColumn(name = "project_id")
+    private List<ProjectRoleJpaEntity> roles = new ArrayList<>();
 }
