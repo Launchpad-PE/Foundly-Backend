@@ -18,11 +18,7 @@ public class ProjectRoleAssembler {
                 CardTitle.of(entity.getCardTitle()),
                 entity.getItems().stream().map(CardItem::of).collect(Collectors.toList())
         );
-
-        // Set ID via reflection or setter - you may need to add a setId method to ProjectRole
-        // For now, we'll create a method in ProjectRole to set ID from persistence
         role.setId(entity.getId());
-
         return role;
     }
 
