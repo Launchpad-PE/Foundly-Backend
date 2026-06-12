@@ -35,6 +35,8 @@ public class ProjectAssembler {
     public static ProjectJpaEntity toJpaFromDomain(Project domain) {
         if (domain == null) return null;
 
+        System.out.println("🔍 [ASSEMBLER] domain.getEnvironmentalMetrics(): " + domain.getEnvironmentalMetrics());
+
         var entity = new ProjectJpaEntity();
         entity.setProjectId(domain.getProjectIdValue());
         entity.setName(domain.getNameValue());
