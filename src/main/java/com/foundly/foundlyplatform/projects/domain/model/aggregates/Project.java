@@ -107,7 +107,7 @@ public class Project extends AuditableAbstractPersistenceEntity {
         this.requiredSkills = new ArrayList<>(requiredSkills);
         this.duration = duration;
         this.roles = new ArrayList<>(roles);
-        this.status = ProjectStatus.DRAFT;
+        this.status = ProjectStatus.PUBLISHED;
         this.authorId = authorId;
         this.authorName = authorName;
     }
