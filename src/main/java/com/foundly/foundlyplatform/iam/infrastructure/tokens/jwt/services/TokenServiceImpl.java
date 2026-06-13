@@ -83,18 +83,18 @@ public class TokenServiceImpl implements BearerTokenService {
     public boolean validateToken(String token) {
         try {
             Jwts.parser().verifyWith(getSigningKey()).build().parseSignedClaims(token);
-            log.info("Token is valid");
+            log.info("✅ Token is valid");
             return true;
-        }  catch (SignatureException e) {
-            log.error("Invalid JSON Web Token Signature: {}", e.getMessage());
+        } catch (SignatureException e) {
+            log.error("❌ Invalid JSON Web Token Signature: {}", e.getMessage());
         } catch (MalformedJwtException e) {
-            log.error("Invalid JSON Web Token: {}", e.getMessage());
+            log.error("❌ Invalid JSON Web Token: {}", e.getMessage());
         } catch (ExpiredJwtException e) {
-            log.error("JSON Web Token is expired: {}", e.getMessage());
+            log.error("❌ JSON Web Token is expired: {}", e.getMessage());
         } catch (UnsupportedJwtException e) {
-            log.error("JSON Web Token is unsupported: {}", e.getMessage());
+            log.error("❌ JSON Web Token is unsupported: {}", e.getMessage());
         } catch (IllegalArgumentException e) {
-            log.error("JSON Web Token claims string is empty: {}", e.getMessage());
+            log.error("❌ JSON Web Token claims string is empty: {}", e.getMessage());
         }
         return false;
     }
