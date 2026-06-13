@@ -47,18 +47,24 @@ public class BearerAuthorizationRequestFilter extends OncePerRequestFilter {
     @Override
     protected void doFilterInternal(@NonNull HttpServletRequest request, @NonNull HttpServletResponse response, @NonNull FilterChain filterChain) throws ServletException, IOException {
         try {
+            String authHeader = request.getHeader("Authorization");
+            log.info("🔐 Authorization header recibido: {}", authHeader);
+
             String token = tokenService.getBearerTokenFrom(request);
-            log.info("Token: {}", token);
+            log.info("🔐 Token extraído: {}", token != null ? token.substring(0, Math.min(token.length(), 20)) + "..." : "null");
+
             if (token != null && tokenService.validateToken(token)) {
                 String username = tokenService.getUsernameFromToken(token);
+                log.info("🔐 Username extraído del token: {}", username);
                 var userDetails = userDetailsService.loadUserByUsername(username);
                 SecurityContextHolder.getContext().setAuthentication(UsernamePasswordAuthenticationTokenBuilder.build(userDetails, request));
+                log.info("✅ Autenticación establecida para: {}", username);
             } else {
-                log.info("Token is not valid");
+                log.warn("❌ Token inválido o no presente");
             }
 
         } catch (Exception e) {
-            log.error("Cannot set user authentication: {}", e.getMessage());
+            log.error("❌ Cannot set user authentication: {}", e.getMessage(), e);
         }
         filterChain.doFilter(request, response);
     }
