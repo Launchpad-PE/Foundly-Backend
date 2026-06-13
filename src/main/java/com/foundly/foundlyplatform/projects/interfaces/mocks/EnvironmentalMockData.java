@@ -19,7 +19,7 @@ public class EnvironmentalMockData {
         );
     }
 
-    private static List<MetricCardResource> getMockMetrics() {
+    public static List<MetricCardResource> getMockMetrics() {
         return List.of(
                 new MetricCardResource("AIR_QUALITY", "72", "AQI", "good", "🌬️", "#667eea"),
                 new MetricCardResource("HUMIDITY", "68", "%", "moderate", "💧", "#3b82f6"),
@@ -28,7 +28,7 @@ public class EnvironmentalMockData {
         );
     }
 
-    private static List<MetricTrendResource> getMockTrends() {
+    public static List<MetricTrendResource> getMockTrends() {
         return List.of(
                 new MetricTrendResource("AIR_QUALITY",
                         List.of(45, 55, 60, 72, 68, 75, 72), DAYS),
@@ -41,11 +41,9 @@ public class EnvironmentalMockData {
         );
     }
 
-    private static List<AlertResource> getMockAlerts() {
+    public static List<AlertResource> getMockAlerts() {
         return List.of(
-                new AlertResource("red", "AQI superó nivel 100 en zonas norte", "Hoy, 10:32 am"),
-                new AlertResource("yellow", "Humedad fuera del rango óptimo (>75%)", "Ayer, 6:15 pm"),
-                new AlertResource("green", "Temperatura volvió a rango normal", "Ayer, 2:00 pm")
+                new AlertResource("green", "Todas las métricas dentro de parámetros normales", "Hace 1 hora")
         );
     }
 
