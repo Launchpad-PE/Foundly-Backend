@@ -1,0 +1,42 @@
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+.vscode/
+*.iml
+*.iws
+*.ipr
+
+# Build
+target/
+*.class
+*.jar
+*.war
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+.dockerignore
+
+# Maven
+.mvn/
+mvnw
+mvnw.cmd
+
+# Node (si usas frontend)
+node_modules/
+npm-debug.log*
+
+# Railway
+railway.json
+
+README.md
