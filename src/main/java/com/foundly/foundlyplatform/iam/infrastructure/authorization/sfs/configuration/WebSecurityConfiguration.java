@@ -94,9 +94,9 @@ public class WebSecurityConfiguration {
         // ✅ CAMBIADO: _ → request
         http.cors(configurer -> configurer.configurationSource(request -> {
             var cors = new CorsConfiguration();
-            cors.setAllowedOrigins(List.of("*"));
+            cors.setAllowedOriginPatterns(List.of("*"));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
-            cors.setAllowedHeaders(List.of("*"));
+            cors.setAllowCredentials(true);
             return cors;
         }));
         http.csrf(csrfConfigurer -> csrfConfigurer.disable())
