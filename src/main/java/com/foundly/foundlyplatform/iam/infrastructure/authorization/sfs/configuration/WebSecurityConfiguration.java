@@ -91,7 +91,8 @@ public class WebSecurityConfiguration {
      */
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.cors(configurer -> configurer.configurationSource(_ -> {
+        // ✅ CAMBIADO: _ → request
+        http.cors(configurer -> configurer.configurationSource(request -> {
             var cors = new CorsConfiguration();
             cors.setAllowedOrigins(List.of("*"));
             cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
@@ -113,7 +114,6 @@ public class WebSecurityConfiguration {
         http.authenticationProvider(authenticationProvider());
         http.addFilterBefore(authorizationRequestFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
-
     }
 
     /**
