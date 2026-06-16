@@ -54,7 +54,7 @@ public class OpenApiConfiguration {
                         .url("http://localhost:8080")
                         .description("Local Development Environment"),
                 new Server()
-                        .url("https://foundly-backend.up.railway.app")
+                        .url("https://foundly-backend-production.up.railway.app")
                         .description("Railway Production Environment"),
                 new Server()
                         .url("https://staging-api.foundly.com")
