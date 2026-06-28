@@ -7,15 +7,15 @@ import java.util.List;
 
 public class CreateProjectResource {
 
-    @NotBlank @Size(min = 3, max = 100)
+    @NotBlank(message = "{validation.not-blank}") @Size(min = 3, max = 100)
     private String name;
 
-    @NotBlank
+    @NotBlank(message = "{validation.not-blank}")
     private String area;
 
     private List<String> tags;
 
-    @NotBlank @Size(min = 10, max = 500)
+    @NotBlank(message = "{validation.not-blank}") @Size(min = 10, max = 500)
     private String summary;
 
     // ✅ Cambiado a environmentalImpact
@@ -27,10 +27,10 @@ public class CreateProjectResource {
 
     private List<String> requiredSkills;
 
-    @NotNull
+    @NotNull(message = "{validation.not-null}")
     private Integer durationAmount;
 
-    @NotNull
+    @NotNull(message = "{validation.not-null}")
     private String durationType;
 
     private List<RoleResource> roles;
