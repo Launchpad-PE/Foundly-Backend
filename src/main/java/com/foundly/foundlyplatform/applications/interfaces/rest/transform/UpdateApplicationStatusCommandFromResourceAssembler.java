@@ -10,8 +10,14 @@ public final class UpdateApplicationStatusCommandFromResourceAssembler {
 
     private UpdateApplicationStatusCommandFromResourceAssembler() {}
 
-    public static UpdateApplicationStatusCommand toCommandFromResource(Long applicationId,
-                                                                       UpdateApplicationStatusResource resource) {
+    // ANTES: recibía Long
+    // public static UpdateApplicationStatusCommand toCommandFromResource(Long applicationId, UpdateApplicationStatusResource resource)
+
+    // AHORA: recibe String
+    public static UpdateApplicationStatusCommand toCommandFromResource(
+            String applicationId,  // ← Long → String
+            UpdateApplicationStatusResource resource
+    ) {
         return new UpdateApplicationStatusCommand(applicationId, resource.status());
     }
 }
