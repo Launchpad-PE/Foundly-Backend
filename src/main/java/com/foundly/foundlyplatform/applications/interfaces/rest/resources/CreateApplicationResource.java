@@ -5,8 +5,8 @@ package com.foundly.foundlyplatform.applications.interfaces.rest.resources;
  * Matches the frontend's ApplicationResource schema.
  */
 public record CreateApplicationResource(
-        Long projectId,
-        Long userId,
+        String  projectId,
+        String  userId,
         String roleId,
         String fullName,
         String email,
