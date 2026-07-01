@@ -6,6 +6,7 @@ import com.foundly.foundlyplatform.applications.domain.model.queries.GetApplicat
 import com.foundly.foundlyplatform.applications.domain.model.queries.GetApplicationsByProjectAndUserIdQuery;
 import com.foundly.foundlyplatform.applications.domain.model.queries.GetApplicationsByProjectIdQuery;
 import com.foundly.foundlyplatform.applications.domain.model.queries.GetApplicationsByUserIdQuery;
+import com.foundly.foundlyplatform.applications.domain.repositories.ApplicationRepository;
 import com.foundly.foundlyplatform.applications.interfaces.rest.resources.ApplicationResource;
 import com.foundly.foundlyplatform.applications.interfaces.rest.resources.CreateApplicationResource;
 import com.foundly.foundlyplatform.applications.interfaces.rest.resources.UpdateApplicationStatusResource;
@@ -24,14 +25,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -56,11 +50,14 @@ public class ApplicationsController {
 
     private final ApplicationCommandService commandService;
     private final ApplicationQueryService   queryService;
+    private final ApplicationRepository applicationRepository;
 
     public ApplicationsController(ApplicationCommandService commandService,
-                                  ApplicationQueryService queryService) {
+                                  ApplicationQueryService queryService,
+                                  ApplicationRepository applicationRepository) {
         this.commandService = commandService;
         this.queryService   = queryService;
+        this.applicationRepository = applicationRepository;
     }
 
     // ── Commands ────────────────────────────────────────────────────────────
@@ -84,7 +81,7 @@ public class ApplicationsController {
                 result, ApplicationResourceFromEntityAssembler::toResourceFromEntity, HttpStatus.CREATED);
     }
 
-    @PatchMapping("/{id}/status")
+    @PostMapping("/{id}/status")
     @Operation(
             summary  = "Accept or reject an application",
             description = "Updates the status of an existing application to ACCEPTED or REJECTED.",
@@ -98,7 +95,7 @@ public class ApplicationsController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<?> updateStatus(
-            @PathVariable @Parameter(description = "Application ID", example = "1") Long id,
+            @PathVariable @Parameter(description = "Application ID", example = "123e4567-e89b-12d3-a456-426614174000") String id,
             @RequestBody UpdateApplicationStatusResource resource
     ) {
         var command = UpdateApplicationStatusCommandFromResourceAssembler.toCommandFromResource(id, resource);
@@ -118,7 +115,7 @@ public class ApplicationsController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<?> getById(
-            @PathVariable @Parameter(description = "Application ID", example = "1") Long id
+            @PathVariable @Parameter(description = "Application ID", example = "123e4567-e89b-12d3-a456-426614174000") String id
     ) {
         var query  = new GetApplicationByIdQuery(id);
         var result = queryService.handle(query);
@@ -145,8 +142,8 @@ public class ApplicationsController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<?> list(
-            @RequestParam(required = false) @Parameter(description = "Project ID filter") Long projectId,
-            @RequestParam(required = false) @Parameter(description = "User ID filter")    Long userId
+            @RequestParam(required = false) @Parameter(description = "Project ID filter") String projectId,
+            @RequestParam(required = false) @Parameter(description = "User ID filter") String userId
     ) {
         if (projectId != null && userId != null) {
             var applications = queryService.handle(new GetApplicationsByProjectAndUserIdQuery(projectId, userId));
@@ -171,5 +168,26 @@ public class ApplicationsController {
         return applications.stream()
                 .map(ApplicationResourceFromEntityAssembler::toResourceFromEntity)
                 .toList();
+    }
+
+    // ── Endpoint de verificación (ya no es necesario pero lo mantenemos por compatibilidad) ──
+
+    @GetMapping("/check")
+    @Operation(
+            summary = "Check if a user has already applied to a project",
+            description = "Returns true if the user has already submitted an application for the given project"
+    )
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "Check completed successfully"),
+            @ApiResponse(responseCode = "400", description = "Invalid projectId or userId format")
+    })
+    public ResponseEntity<Boolean> checkIfApplied(
+            @RequestParam @Parameter(description = "Project ID") String projectId,
+            @RequestParam @Parameter(description = "User ID") String userId
+    ) {
+        // Ahora ambos son String, no necesitamos convertir
+        boolean exists = applicationRepository.existsByProjectIdAndUserId(projectId, userId);
+        System.out.println("🔍 [CHECK] projectId=" + projectId + ", userId=" + userId + " → " + exists);
+        return ResponseEntity.ok(exists);
     }
 }
