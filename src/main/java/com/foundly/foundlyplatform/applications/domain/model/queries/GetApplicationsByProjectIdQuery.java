@@ -5,4 +5,4 @@ package com.foundly.foundlyplatform.applications.domain.model.queries;
  *
  * @param projectId identifier of the project
  */
-public record GetApplicationsByProjectIdQuery(Long projectId) {}
+public record GetApplicationsByProjectIdQuery(String projectId) {}
