@@ -51,6 +51,8 @@ public class ApplicationCommandServiceImpl implements ApplicationCommandService 
             return Result.failure(ApplicationError.validationError(
                     "acceptedTerms", "You must accept the terms to apply"));
         }
+
+        // Ya no necesitamos convertir, ambos son String
         if (applicationRepository.existsByProjectIdAndUserId(command.projectId(), command.userId())) {
             return Result.failure(ApplicationError.conflict(
                     "application", "User has already applied to this project"));
@@ -75,6 +77,10 @@ public class ApplicationCommandServiceImpl implements ApplicationCommandService 
 
     @Override
     public Result<Application, ApplicationError> handle(UpdateApplicationStatusCommand command) {
+        System.out.println("🔍 [SERVICE] Recibido comando:");
+        System.out.println("  - applicationId: '" + command.applicationId() + "'");
+        System.out.println("  - status: " + command.status());
+
         if (command.applicationId() == null) {
             return Result.failure(ApplicationError.validationError(
                     "applicationId", "Application ID is required"));
