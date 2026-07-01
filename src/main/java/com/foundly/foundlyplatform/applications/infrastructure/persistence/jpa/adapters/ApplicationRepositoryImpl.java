@@ -29,34 +29,47 @@ public class ApplicationRepositoryImpl implements ApplicationRepository {
     }
 
     @Override
-    public Optional<Application> findById(Long id) {
-        return persistenceRepository.findById(id)
-                .map(ApplicationPersistenceAssembler::toDomainFromPersistence);
+    public Optional<Application> findById(String id) {
+        System.out.println("🔍 [REPOSITORY] Buscando ID: '" + id + "'");
+        System.out.println("🔍 [REPOSITORY] Longitud del ID: " + (id != null ? id.length() : 0));
+
+        if (id != null) {
+            System.out.println("🔍 [REPOSITORY] ID en hex: ");
+            for (char c : id.toCharArray()) {
+                System.out.print(Integer.toHexString(c) + " ");
+            }
+            System.out.println();
+        }
+
+        var result = persistenceRepository.findById(id);
+        System.out.println("🔍 [REPOSITORY] Resultado: " + (result.isPresent() ? "ENCONTRADA ✅" : "NO ENCONTRADA ❌"));
+
+        return result.map(ApplicationPersistenceAssembler::toDomainFromPersistence);
     }
 
     @Override
-    public List<Application> findByProjectId(Long projectId) {
+    public List<Application> findByProjectId(String  projectId) {
         return persistenceRepository.findByProjectId(projectId).stream()
                 .map(ApplicationPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public List<Application> findByUserId(Long userId) {
+    public List<Application> findByUserId(String  userId) {
         return persistenceRepository.findByUserId(userId).stream()
                 .map(ApplicationPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public List<Application> findByProjectIdAndUserId(Long projectId, Long userId) {
+    public List<Application> findByProjectIdAndUserId(String  projectId, String  userId) {
         return persistenceRepository.findByProjectIdAndUserId(projectId, userId).stream()
                 .map(ApplicationPersistenceAssembler::toDomainFromPersistence)
                 .toList();
     }
 
     @Override
-    public boolean existsByProjectIdAndUserId(Long projectId, Long userId) {
+    public boolean existsByProjectIdAndUserId(String  projectId, String  userId) {
         return persistenceRepository.existsByProjectIdAndUserId(projectId, userId);
     }
 }
