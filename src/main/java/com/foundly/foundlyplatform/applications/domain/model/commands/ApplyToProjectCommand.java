@@ -16,8 +16,8 @@ package com.foundly.foundlyplatform.applications.domain.model.commands;
  * @param avatarUrl     optional profile picture URL
  */
 public record ApplyToProjectCommand(
-        Long projectId,
-        Long userId,
+        String projectId,    // ← AHORA STRING (UUID)
+        String userId,       // ← AHORA STRING
         String roleId,
         String fullName,
         String email,
