@@ -12,13 +12,13 @@ public interface ApplicationRepository {
 
     Application save(Application application);
 
-    Optional<Application> findById(Long id);
+    Optional<Application> findById(String id);  // ← Long → String
 
-    List<Application> findByProjectId(Long projectId);
+    List<Application> findByProjectId(String projectId);  // ← Long → String
 
-    List<Application> findByUserId(Long userId);
+    List<Application> findByUserId(String userId);  // ← Long → String
 
-    List<Application> findByProjectIdAndUserId(Long projectId, Long userId);
+    List<Application> findByProjectIdAndUserId(String projectId, String userId);
 
-    boolean existsByProjectIdAndUserId(Long projectId, Long userId);
+    boolean existsByProjectIdAndUserId(String projectId, String userId);  // ← Long → String
 }
