@@ -9,9 +9,9 @@ import java.util.Date;
  * Fields match the frontend Application entity schema.
  */
 public record ApplicationResource(
-        Long id,
-        Long projectId,
-        Long userId,
+        String  id,
+        String  projectId,
+        String  userId,
         String roleId,
         ApplicationStatus status,
         String fullName,
