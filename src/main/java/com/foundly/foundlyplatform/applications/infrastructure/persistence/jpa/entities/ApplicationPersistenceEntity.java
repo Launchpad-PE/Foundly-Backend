@@ -1,31 +1,35 @@
 package com.foundly.foundlyplatform.applications.infrastructure.persistence.jpa.entities;
 
 import com.foundly.foundlyplatform.applications.domain.model.valueobjects.ApplicationStatus;
-import com.foundly.foundlyplatform.shared.infrastructure.persistence.jpa.entities.AuditableAbstractPersistenceEntity;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.util.Date;
+
 /**
  * JPA persistence entity for project applications.
+ *
+ * NOTA: No extiende de AuditableAbstractPersistenceEntity porque usamos String como ID (UUID)
+ * en lugar de Long.
  */
 @Entity
 @Table(name = "applications")
 @Getter
 @Setter
 @NoArgsConstructor
-public class ApplicationPersistenceEntity extends AuditableAbstractPersistenceEntity {
+public class ApplicationPersistenceEntity {
 
-    @Column(name = "project_id", nullable = false)
-    private Long projectId;
+    @Id
+    @Column(name = "id", nullable = false, updatable = false, length = 36)
+    private String id;
 
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
+    @Column(name = "project_id", nullable = false, length = 36)
+    private String projectId;
+
+    @Column(name = "user_id", nullable = false, length = 36)
+    private String userId;
 
     @Column(name = "role_id", nullable = false, length = 100)
     private String roleId;
@@ -57,4 +61,27 @@ public class ApplicationPersistenceEntity extends AuditableAbstractPersistenceEn
 
     @Column(name = "avatar_url", length = 500)
     private String avatarUrl;
+
+    // ─── Campos de auditoría (copiados de AuditableAbstractPersistenceEntity) ───
+
+    @Column(name = "created_at", updatable = false)
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date createdAt;
+
+    @Column(name = "updated_at")
+    @Temporal(TemporalType.TIMESTAMP)
+    private Date updatedAt;
+
+    // ─── Lifecycle callbacks para auditoría ───────────────────────────
+
+    @PrePersist
+    protected void onCreate() {
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
+    }
+
+    @PreUpdate
+    protected void onUpdate() {
+        this.updatedAt = new Date();
+    }
 }
