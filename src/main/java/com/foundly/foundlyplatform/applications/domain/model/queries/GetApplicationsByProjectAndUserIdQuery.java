@@ -9,4 +9,7 @@ package com.foundly.foundlyplatform.applications.domain.model.queries;
  * @param projectId identifier of the project
  * @param userId    identifier of the applicant
  */
-public record GetApplicationsByProjectAndUserIdQuery(Long projectId, Long userId) {}
+public record GetApplicationsByProjectAndUserIdQuery(
+        String projectId,
+        String userId
+) {}
