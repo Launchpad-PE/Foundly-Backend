@@ -34,9 +34,7 @@ public final class ApplicationPersistenceAssembler {
     public static ApplicationPersistenceEntity toPersistenceFromDomain(Application domain) {
         if (domain == null) return null;
         var entity = new ApplicationPersistenceEntity();
-        if (domain.getId() != null) {
-            entity.setId(domain.getId());
-        }
+        entity.setId(domain.getId());  // ← Siempre tiene ID (UUID generado)
         entity.setProjectId(domain.getProjectId());
         entity.setUserId(domain.getUserId());
         entity.setRoleId(domain.getRoleId());
@@ -49,6 +47,8 @@ public final class ApplicationPersistenceAssembler {
         entity.setMessage(domain.getMessage());
         entity.setAcceptedTerms(domain.isAcceptedTerms());
         entity.setAvatarUrl(domain.getAvatarUrl());
+        entity.setCreatedAt(domain.getCreatedAt());
+        entity.setUpdatedAt(domain.getUpdatedAt());
         return entity;
     }
 }
