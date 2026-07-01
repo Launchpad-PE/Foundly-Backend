@@ -8,13 +8,13 @@ import java.util.List;
 /**
  * Spring Data JPA repository for ApplicationPersistenceEntity.
  */
-public interface ApplicationPersistenceRepository extends JpaRepository<ApplicationPersistenceEntity, Long> {
+public interface ApplicationPersistenceRepository extends JpaRepository<ApplicationPersistenceEntity, String> {
 
-    List<ApplicationPersistenceEntity> findByProjectId(Long projectId);
+    List<ApplicationPersistenceEntity> findByProjectId(String projectId);  // ← Long → String
 
-    List<ApplicationPersistenceEntity> findByUserId(Long userId);
+    List<ApplicationPersistenceEntity> findByUserId(String userId);  // ← Long → String
 
-    List<ApplicationPersistenceEntity> findByProjectIdAndUserId(Long projectId, Long userId);
+    List<ApplicationPersistenceEntity> findByProjectIdAndUserId(String projectId, String userId);  // ← Long → String
 
-    boolean existsByProjectIdAndUserId(Long projectId, Long userId);
+    boolean existsByProjectIdAndUserId(String projectId, String userId);  // ← Long → String
 }
