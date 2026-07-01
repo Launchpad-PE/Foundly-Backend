@@ -5,4 +5,4 @@ package com.foundly.foundlyplatform.applications.domain.model.queries;
  *
  * @param applicationId identifier of the application
  */
-public record GetApplicationByIdQuery(Long applicationId) {}
+public record GetApplicationByIdQuery(String applicationId) {}
