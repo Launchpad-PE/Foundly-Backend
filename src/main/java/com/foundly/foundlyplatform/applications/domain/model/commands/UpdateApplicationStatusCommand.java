@@ -8,4 +8,7 @@ import com.foundly.foundlyplatform.applications.domain.model.valueobjects.Applic
  * @param applicationId identifier of the application to update
  * @param status        new status (ACCEPTED or REJECTED)
  */
-public record UpdateApplicationStatusCommand(Long applicationId, ApplicationStatus status) {}
+public record UpdateApplicationStatusCommand(
+        String applicationId,  // ← AHORA STRING
+        ApplicationStatus status
+) {}
