@@ -7,6 +7,8 @@ import lombok.Setter;
 
 import java.util.Date;
 
+import static java.util.UUID.randomUUID;
+
 /**
  * Application aggregate root.
  *
@@ -17,9 +19,9 @@ import java.util.Date;
 @Getter
 public class Application extends AbstractDomainAggregateRoot<Application> {
 
-    @Setter private Long id;
-    @Setter private Long projectId;
-    @Setter private Long userId;
+    @Setter private String id;         // ← Long → String
+    @Setter private String projectId;  // ← Long → String
+    @Setter private String userId;     // ← Long → String
     @Setter private String roleId;
     @Setter private ApplicationStatus status;
     @Setter private String fullName;
@@ -35,11 +37,12 @@ public class Application extends AbstractDomainAggregateRoot<Application> {
 
     public Application() {}
 
-    public Application(Long projectId, Long userId, String roleId,
+    public Application(String projectId, String userId, String roleId,
                        String fullName, String email,
                        String portfolioUrl, String phone,
                        String cvUrl, String message,
                        boolean acceptedTerms, String avatarUrl) {
+        this.id = randomUUID().toString();
         this.projectId    = projectId;
         this.userId       = userId;
         this.roleId       = roleId;
