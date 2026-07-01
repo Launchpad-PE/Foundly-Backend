@@ -41,6 +41,6 @@ public class ApplicationQueryServiceImpl implements ApplicationQueryService {
 
     @Override
     public List<Application> handle(GetApplicationsByProjectAndUserIdQuery query) {
-        return applicationRepository.findByProjectIdAndUserId(query.projectId(), query.userId());
+        return applicationRepository.findByProjectIdAndUserId(query.projectId(), query.userId());  // ← String
     }
 }
