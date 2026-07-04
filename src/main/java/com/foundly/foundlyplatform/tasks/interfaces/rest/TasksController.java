@@ -7,12 +7,14 @@ import com.foundly.foundlyplatform.tasks.application.commandservices.TaskCommand
 import com.foundly.foundlyplatform.tasks.application.queryservices.TaskQueryService;
 import com.foundly.foundlyplatform.tasks.domain.model.aggregates.Task;
 import com.foundly.foundlyplatform.tasks.domain.model.commands.DeleteTaskCommand;
+import com.foundly.foundlyplatform.tasks.domain.model.commands.PatchTaskCommand;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTaskByIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByAssigneeIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectAndAssigneeQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectIdQuery;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.CreateTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.PatchTaskResource;
+import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.RescheduleTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.TaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.transform.CreateTaskCommandFromResourceAssembler;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.transform.PatchTaskCommandFromResourceAssembler;
@@ -37,9 +39,9 @@ import java.util.Optional;
 /**
  * REST controller for task management.
  *
- * <p>Endpoints (create/update/delete/view are restricted to the task's creator —
- * the emprendedor — so an empleado/colaborador can't be routed into an action
- * that isn't theirs, and vice versa):
+ * <p>Endpoints (create/update/delete/reschedule/view are restricted to the task's
+ * creator — the emprendedor — so an empleado/colaborador can't be routed into an
+ * action that isn't theirs, and vice versa):
  * <ul>
  *   <li>POST   /api/v1/tasks                                      – create task (emprendedor only)</li>
  *   <li>GET    /api/v1/tasks/{id}                                 – get by id (emprendedor/creator only)</li>
@@ -47,6 +49,7 @@ import java.util.Optional;
  *   <li>GET    /api/v1/tasks?assigneeId={id}                      – get by assignee</li>
  *   <li>GET    /api/v1/tasks?projectId={id}&assigneeId={id}       – get by project and assignee</li>
  *   <li>PATCH  /api/v1/tasks/{id}                                 – partial update (emprendedor/creator only)</li>
+ *   <li>PATCH  /api/v1/tasks/{id}/due-date                        – reschedule / change due date (emprendedor/creator only)</li>
  *   <li>DELETE /api/v1/tasks/{id}                                 – delete task (emprendedor/creator only)</li>
  * </ul>
  * </p>
@@ -182,6 +185,33 @@ public class TasksController {
         }
 
         var command = PatchTaskCommandFromResourceAssembler.toCommandFromResource(id, resource);
+        return commandService.handle(command)
+                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PatchMapping("/{id}/due-date")
+    @Operation(summary = "Reschedule a task (change its due date) — emprendedor/creator only")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Task rescheduled",
+                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "Task not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<?> rescheduleTask(
+            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @RequestBody RescheduleTaskResource resource) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
+        var command = new PatchTaskCommand(id, null, null, resource.newDueDate(),
+                null, null, null, null, null, null, null);
         return commandService.handle(command)
                 .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
                 .orElse(ResponseEntity.notFound().build());

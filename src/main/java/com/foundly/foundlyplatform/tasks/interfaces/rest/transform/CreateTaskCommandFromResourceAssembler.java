@@ -9,6 +9,14 @@ import java.util.List;
 public class CreateTaskCommandFromResourceAssembler {
 
     public static CreateTaskCommand toCommandFromResource(CreateTaskResource resource) {
+        return toCommandFromResource(resource, resource.creatorId());
+    }
+
+    /**
+     * Builds the command using an explicit creatorId (the authenticated requester),
+     * instead of trusting whatever creatorId the client sent in the request body.
+     */
+    public static CreateTaskCommand toCommandFromResource(CreateTaskResource resource, String creatorId) {
         List<Task.ChecklistItem> checklist = resource.checklist() == null ? List.of() :
                 resource.checklist().stream()
                         .map(c -> new Task.ChecklistItem(c.description(), c.done()))
@@ -17,7 +25,7 @@ public class CreateTaskCommandFromResourceAssembler {
         return new CreateTaskCommand(
                 resource.projectId(),
                 resource.assigneeId(),
-                resource.creatorId(),
+                creatorId,
                 resource.title(),
                 resource.description(),
                 resource.dueDate(),
