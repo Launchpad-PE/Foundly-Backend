@@ -12,6 +12,8 @@ import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTaskByIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByAssigneeIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectAndAssigneeQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectIdQuery;
+import com.foundly.foundlyplatform.tasks.domain.model.valueobjects.TaskStatus;
+import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.CompleteTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.CreateTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.PatchTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.RescheduleTaskResource;
@@ -39,7 +41,7 @@ import java.util.Optional;
 /**
  * REST controller for task management.
  *
- * <p>Endpoints (create/update/delete/reschedule/view are restricted to the task's
+ * <p>Endpoints (create/delete/reschedule/complete/view are restricted to the task's
  * creator — the emprendedor — so an empleado/colaborador can't be routed into an
  * action that isn't theirs, and vice versa):
  * <ul>
@@ -50,6 +52,7 @@ import java.util.Optional;
  *   <li>GET    /api/v1/tasks?projectId={id}&assigneeId={id}       – get by project and assignee</li>
  *   <li>PATCH  /api/v1/tasks/{id}                                 – partial update (emprendedor/creator only)</li>
  *   <li>PATCH  /api/v1/tasks/{id}/due-date                        – reschedule / change due date (emprendedor/creator only)</li>
+ *   <li>POST   /api/v1/tasks/{id}/complete                        – complete task with delivery (emprendedor/creator only)</li>
  *   <li>DELETE /api/v1/tasks/{id}                                 – delete task (emprendedor/creator only)</li>
  * </ul>
  * </p>
@@ -212,6 +215,33 @@ public class TasksController {
 
         var command = new PatchTaskCommand(id, null, null, resource.newDueDate(),
                 null, null, null, null, null, null, null);
+        return commandService.handle(command)
+                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "Complete a task with a delivery URL — emprendedor/creator only")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Task completed",
+                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "Task not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<?> completeTask(
+            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @RequestBody CompleteTaskResource resource) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
+        var command = new PatchTaskCommand(id, null, null, null, null, null, null, null,
+                TaskStatus.COMPLETED, resource.deliveryUrl(), resource.deliveryNotes());
         return commandService.handle(command)
                 .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
                 .orElse(ResponseEntity.notFound().build());
