@@ -20,19 +20,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.Date;
 import java.util.List;
 
-/**
- * REST controller for Milestone management.
- *
- * <p>Endpoints:
- * GET    /api/v1/milestones?projectId=...  → get all milestones for a project
- * GET    /api/v1/milestones/{id}           → get milestone by id
- * POST   /api/v1/milestones               → create milestone (with optional tasks)
- * PUT    /api/v1/milestones/{id}           → full update
- * PATCH  /api/v1/milestones/{id}           → partial update
- * PATCH  /api/v1/milestones/{id}/reschedule → reschedule due date
- * DELETE /api/v1/milestones/{id}           → delete milestone
- * </p>
- */
 @RestController
 @RequestMapping(value = "/api/v1/milestones", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Milestones", description = "Milestone Management Endpoints")
@@ -48,13 +35,14 @@ public class MilestonesController {
         this.queryService = queryService;
     }
 
-    // ─── Queries ──────────────────────────────────────────────────────────────
-
     @GetMapping
     @Operation(summary = "Get milestones by project")
     public ResponseEntity<List<MilestoneResource>> getMilestonesByProject(
-            @RequestParam String projectId
+            @RequestParam(required = false) String projectId
     ) {
+        if (projectId == null || projectId.isBlank()) {
+            return ResponseEntity.ok(List.of());
+        }
         var milestones = queryService.handle(new GetMilestonesByProjectIdQuery(projectId));
         var resources = milestones.stream()
                 .map(MilestoneResourceFromEntityAssembler::toResourceFromEntity)
@@ -70,8 +58,6 @@ public class MilestonesController {
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
-
-    // ─── Commands ─────────────────────────────────────────────────────────────
 
     @PostMapping
     @Operation(summary = "Create a new milestone (with optional initial tasks)")
