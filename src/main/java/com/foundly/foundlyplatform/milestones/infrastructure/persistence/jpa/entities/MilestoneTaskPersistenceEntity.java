@@ -26,7 +26,7 @@ public class MilestoneTaskPersistenceEntity {
     @Column(name = "id", nullable = false, length = 36)
     private String id;
 
-    @Column(name = "milestone_id", nullable = false, length = 36)
+    @Column(name = "milestone_id", nullable = false, length = 36, insertable = false, updatable = false)
     private String milestoneId;
 
     @Column(name = "title", nullable = false, length = 200)

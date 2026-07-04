@@ -64,7 +64,7 @@ public class MilestonePersistenceEntity {
     private String deliveryNotes;
 
     @OneToMany(cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.EAGER)
-    @JoinColumn(name = "milestone_id")
+    @JoinColumn(name = "milestone_id", nullable = false)
     private List<MilestoneTaskPersistenceEntity> tasks = new ArrayList<>();
 
     @CreatedDate
