@@ -1,5 +1,7 @@
 package com.foundly.foundlyplatform.tasks.interfaces.rest;
 
+import com.foundly.foundlyplatform.iam.application.queryservices.UserQueryService;
+import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByUsernameQuery;
 import com.foundly.foundlyplatform.tasks.application.commandservices.TaskCommandService;
 import com.foundly.foundlyplatform.tasks.application.queryservices.TaskQueryService;
 import com.foundly.foundlyplatform.tasks.domain.model.commands.DeleteTaskCommand;
@@ -24,6 +26,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -50,10 +53,24 @@ public class TasksController {
 
     private final TaskCommandService commandService;
     private final TaskQueryService queryService;
+    private final UserQueryService userQueryService;
 
-    public TasksController(TaskCommandService commandService, TaskQueryService queryService) {
+    public TasksController(TaskCommandService commandService, TaskQueryService queryService,
+                            UserQueryService userQueryService) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.userQueryService = userQueryService;
+    }
+
+    private Long getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            var user = userQueryService.handle(new GetUserByUsernameQuery(auth.getName()));
+            if (user.isPresent()) {
+                return user.get().getId();
+            }
+        }
+        throw new IllegalStateException("User not authenticated");
     }
 
     @PostMapping
@@ -65,7 +82,9 @@ public class TasksController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<TaskResource> createTask(@RequestBody CreateTaskResource resource) {
-        var command = CreateTaskCommandFromResourceAssembler.toCommandFromResource(resource);
+        // creatorId always comes from the authenticated user, never trusted from the request body
+        var command = CreateTaskCommandFromResourceAssembler.toCommandFromResource(
+                resource, String.valueOf(getCurrentUserId()));
         var result = commandService.handle(command);
         return result
                 .map(task -> ResponseEntity.status(HttpStatus.CREATED)
