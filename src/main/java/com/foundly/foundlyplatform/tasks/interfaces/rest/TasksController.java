@@ -1,14 +1,22 @@
 package com.foundly.foundlyplatform.tasks.interfaces.rest;
 
+import com.foundly.foundlyplatform.iam.application.queryservices.UserQueryService;
+import com.foundly.foundlyplatform.iam.domain.model.queries.GetUserByUsernameQuery;
+import com.foundly.foundlyplatform.shared.interfaces.rest.resources.MessageResource;
 import com.foundly.foundlyplatform.tasks.application.commandservices.TaskCommandService;
 import com.foundly.foundlyplatform.tasks.application.queryservices.TaskQueryService;
+import com.foundly.foundlyplatform.tasks.domain.model.aggregates.Task;
 import com.foundly.foundlyplatform.tasks.domain.model.commands.DeleteTaskCommand;
+import com.foundly.foundlyplatform.tasks.domain.model.commands.PatchTaskCommand;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTaskByIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByAssigneeIdQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectAndAssigneeQuery;
 import com.foundly.foundlyplatform.tasks.domain.model.queries.GetTasksByProjectIdQuery;
+import com.foundly.foundlyplatform.tasks.domain.model.valueobjects.TaskStatus;
+import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.CompleteTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.CreateTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.PatchTaskResource;
+import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.RescheduleTaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.resources.TaskResource;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.transform.CreateTaskCommandFromResourceAssembler;
 import com.foundly.foundlyplatform.tasks.interfaces.rest.transform.PatchTaskCommandFromResourceAssembler;
@@ -24,40 +32,74 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * REST controller for task management.
  *
- * <p>Endpoints:
+ * <p>Endpoints (create/delete/reschedule/complete/view are restricted to the task's
+ * creator — the emprendedor — so an empleado/colaborador can't be routed into an
+ * action that isn't theirs, and vice versa):
  * <ul>
- *   <li>POST   /api/v1/tasks                                      – create task</li>
- *   <li>GET    /api/v1/tasks/{id}                                 – get by id</li>
+ *   <li>POST   /api/v1/tasks                                      – create task (emprendedor only)</li>
+ *   <li>GET    /api/v1/tasks/{id}                                 – get by id (emprendedor/creator only)</li>
  *   <li>GET    /api/v1/tasks?projectId={id}                       – get by project</li>
  *   <li>GET    /api/v1/tasks?assigneeId={id}                      – get by assignee</li>
  *   <li>GET    /api/v1/tasks?projectId={id}&assigneeId={id}       – get by project and assignee</li>
- *   <li>PATCH  /api/v1/tasks/{id}                                 – partial update</li>
- *   <li>DELETE /api/v1/tasks/{id}                                 – delete task</li>
+ *   <li>PATCH  /api/v1/tasks/{id}                                 – partial update (emprendedor/creator only)</li>
+ *   <li>PATCH  /api/v1/tasks/{id}/due-date                        – reschedule / change due date (emprendedor/creator only)</li>
+ *   <li>POST   /api/v1/tasks/{id}/complete                        – complete task with delivery (emprendedor/creator only)</li>
+ *   <li>DELETE /api/v1/tasks/{id}                                 – delete task (emprendedor/creator only)</li>
  * </ul>
  * </p>
  */
 @RestController
 @RequestMapping(value = "/api/v1/tasks", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Tasks", description = "Task management endpoints")
+@SecurityRequirement(name = "bearerAuth")
 public class TasksController {
 
     private final TaskCommandService commandService;
     private final TaskQueryService queryService;
+    private final UserQueryService userQueryService;
 
-    public TasksController(TaskCommandService commandService, TaskQueryService queryService) {
+    public TasksController(TaskCommandService commandService, TaskQueryService queryService,
+                            UserQueryService userQueryService) {
         this.commandService = commandService;
         this.queryService = queryService;
+        this.userQueryService = userQueryService;
+    }
+
+    private Long getCurrentUserId() {
+        var auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.isAuthenticated()) {
+            var user = userQueryService.handle(new GetUserByUsernameQuery(auth.getName()));
+            if (user.isPresent()) {
+                return user.get().getId();
+            }
+        }
+        throw new IllegalStateException("User not authenticated");
+    }
+
+    /**
+     * Only the task's creator (the emprendedor who made it) may act on it.
+     */
+    private boolean isOwner(Task task) {
+        return task.getCreatorId() != null
+                && task.getCreatorId().equals(String.valueOf(getCurrentUserId()));
+    }
+
+    private ResponseEntity<MessageResource> forbidden() {
+        return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                .body(new MessageResource("Only the task's creator (emprendedor) can perform this action"));
     }
 
     @PostMapping
-    @Operation(summary = "Create a task", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Create a task (emprendedor only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Task created",
                     content = @Content(schema = @Schema(implementation = TaskResource.class))),
@@ -65,7 +107,9 @@ public class TasksController {
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
     public ResponseEntity<TaskResource> createTask(@RequestBody CreateTaskResource resource) {
-        var command = CreateTaskCommandFromResourceAssembler.toCommandFromResource(resource);
+        // creatorId always comes from the authenticated user, never trusted from the request body
+        var command = CreateTaskCommandFromResourceAssembler.toCommandFromResource(
+                resource, String.valueOf(getCurrentUserId()));
         var result = commandService.handle(command);
         return result
                 .map(task -> ResponseEntity.status(HttpStatus.CREATED)
@@ -74,19 +118,24 @@ public class TasksController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Get task by id", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Get task by id (emprendedor/creator only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Task found",
                     content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Task not found"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<TaskResource> getTaskById(
+    public ResponseEntity<?> getTaskById(
             @PathVariable @Parameter(description = "Task id", required = true) Long id) {
-        var query = new GetTaskByIdQuery(id);
-        return queryService.handle(query)
-                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
-                .orElse(ResponseEntity.notFound().build());
+        Optional<Task> taskOpt = queryService.handle(new GetTaskByIdQuery(id));
+        if (taskOpt.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(taskOpt.get())) {
+            return forbidden();
+        }
+        return ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(taskOpt.get()));
     }
 
     @GetMapping
@@ -119,30 +168,102 @@ public class TasksController {
     }
 
     @PatchMapping("/{id}")
-    @Operation(summary = "Partially update a task", security = @SecurityRequirement(name = "bearerAuth"))
+    @Operation(summary = "Partially update a task (emprendedor/creator only)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Task updated",
                     content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
             @ApiResponse(responseCode = "404", description = "Task not found"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<TaskResource> patchTask(
+    public ResponseEntity<?> patchTask(
             @PathVariable @Parameter(description = "Task id", required = true) Long id,
             @RequestBody PatchTaskResource resource) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
         var command = PatchTaskCommandFromResourceAssembler.toCommandFromResource(id, resource);
         return commandService.handle(command)
                 .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a task", security = @SecurityRequirement(name = "bearerAuth"))
+    @PatchMapping("/{id}/due-date")
+    @Operation(summary = "Reschedule a task (change its due date) — emprendedor/creator only")
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Task deleted"),
+            @ApiResponse(responseCode = "200", description = "Task rescheduled",
+                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "Task not found"),
             @ApiResponse(responseCode = "401", description = "Unauthorized")
     })
-    public ResponseEntity<Void> deleteTask(
+    public ResponseEntity<?> rescheduleTask(
+            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @RequestBody RescheduleTaskResource resource) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
+        var command = new PatchTaskCommand(id, null, null, resource.newDueDate(),
+                null, null, null, null, null, null, null);
+        return commandService.handle(command)
+                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/complete")
+    @Operation(summary = "Complete a task with a delivery URL — emprendedor/creator only")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Task completed",
+                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "404", description = "Task not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<?> completeTask(
+            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @RequestBody CompleteTaskResource resource) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
+        var command = new PatchTaskCommand(id, null, null, null, null, null, null, null,
+                TaskStatus.COMPLETED, resource.deliveryUrl(), resource.deliveryNotes());
+        return commandService.handle(command)
+                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    @DeleteMapping("/{id}")
+    @Operation(summary = "Delete a task (emprendedor/creator only)")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "204", description = "Task deleted"),
+            @ApiResponse(responseCode = "403", description = "Forbidden"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    public ResponseEntity<?> deleteTask(
             @PathVariable @Parameter(description = "Task id", required = true) Long id) {
+        Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
+        if (existing.isEmpty()) {
+            return ResponseEntity.notFound().build();
+        }
+        if (!isOwner(existing.get())) {
+            return forbidden();
+        }
+
         commandService.handle(new DeleteTaskCommand(id));
         return ResponseEntity.noContent().build();
     }
