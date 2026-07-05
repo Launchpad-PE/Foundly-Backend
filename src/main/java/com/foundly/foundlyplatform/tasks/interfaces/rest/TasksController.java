@@ -38,25 +38,6 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 import java.util.Optional;
 
-/**
- * REST controller for task management.
- *
- * <p>Endpoints (create/delete/reschedule/complete/view are restricted to the task's
- * creator — the emprendedor — so an empleado/colaborador can't be routed into an
- * action that isn't theirs, and vice versa):
- * <ul>
- *   <li>POST   /api/v1/tasks                                      – create task (emprendedor only)</li>
- *   <li>GET    /api/v1/tasks/{id}                                 – get by id (emprendedor/creator only)</li>
- *   <li>GET    /api/v1/tasks?projectId={id}                       – get by project</li>
- *   <li>GET    /api/v1/tasks?assigneeId={id}                      – get by assignee</li>
- *   <li>GET    /api/v1/tasks?projectId={id}&assigneeId={id}       – get by project and assignee</li>
- *   <li>PATCH  /api/v1/tasks/{id}                                 – partial update (emprendedor/creator only)</li>
- *   <li>PATCH  /api/v1/tasks/{id}/due-date                        – reschedule / change due date (emprendedor/creator only)</li>
- *   <li>POST   /api/v1/tasks/{id}/complete                        – complete task with delivery (emprendedor/creator only)</li>
- *   <li>DELETE /api/v1/tasks/{id}                                 – delete task (emprendedor/creator only)</li>
- * </ul>
- * </p>
- */
 @RestController
 @RequestMapping(value = "/api/v1/tasks", produces = MediaType.APPLICATION_JSON_VALUE)
 @Tag(name = "Tasks", description = "Task management endpoints")
@@ -68,7 +49,7 @@ public class TasksController {
     private final UserQueryService userQueryService;
 
     public TasksController(TaskCommandService commandService, TaskQueryService queryService,
-                            UserQueryService userQueryService) {
+                           UserQueryService userQueryService) {
         this.commandService = commandService;
         this.queryService = queryService;
         this.userQueryService = userQueryService;
@@ -85,29 +66,66 @@ public class TasksController {
         throw new IllegalStateException("User not authenticated");
     }
 
-    /**
-     * Only the task's creator (the emprendedor who made it) may act on it.
-     */
+    // ═══════════════════════════════════════════════════════════════════
+    // ✅ MÉTODOS DE PERMISOS - CORREGIDOS
+    // ═══════════════════════════════════════════════════════════════════
+
     private boolean isOwner(Task task) {
-        return task.getCreatorId() != null
-                && task.getCreatorId().equals(String.valueOf(getCurrentUserId()));
+        Long currentUserId = getCurrentUserId();
+        String currentUserIdStr = String.valueOf(currentUserId);
+        boolean result = task.getCreatorId() != null && task.getCreatorId().equals(currentUserIdStr);
+        System.out.println("🔍 [isOwner] creatorId: " + task.getCreatorId() + " | currentUser: " + currentUserIdStr + " | result: " + result);
+        return result;
+    }
+
+    private boolean isAssignee(Task task) {
+        Long currentUserId = getCurrentUserId();
+        String currentUserIdStr = String.valueOf(currentUserId);
+        boolean result = task.getAssigneeId() != null && task.getAssigneeId().equals(currentUserIdStr);
+        System.out.println("🔍 [isAssignee] assigneeId: " + task.getAssigneeId() + " | currentUser: " + currentUserIdStr + " | result: " + result);
+        return result;
+    }
+
+    private boolean canView(Task task) {
+        return isOwner(task) || isAssignee(task);
+    }
+
+    // ✅ ESTE ES EL MÉTODO QUE ESTABA FALTANDO - AHORA SÍ VERIFICA AL ASIGNADO
+    private boolean canComplete(Task task) {
+        Long currentUserId = getCurrentUserId();
+        String currentUserIdStr = String.valueOf(currentUserId);
+
+        boolean isOwnerResult = task.getCreatorId() != null && task.getCreatorId().equals(currentUserIdStr);
+        boolean isAssigneeResult = task.getAssigneeId() != null && task.getAssigneeId().equals(currentUserIdStr);
+
+        System.out.println("🔍 [canComplete] ======================================");
+        System.out.println("🔍 [canComplete] creatorId: " + task.getCreatorId());
+        System.out.println("🔍 [canComplete] assigneeId: " + task.getAssigneeId());
+        System.out.println("🔍 [canComplete] currentUserId: " + currentUserIdStr);
+        System.out.println("🔍 [canComplete] isOwner: " + isOwnerResult);
+        System.out.println("🔍 [canComplete] isAssignee: " + isAssigneeResult);
+        System.out.println("🔍 [canComplete] RESULTADO FINAL: " + (isOwnerResult || isAssigneeResult));
+        System.out.println("🔍 [canComplete] ======================================");
+
+        return isOwnerResult || isAssigneeResult;
+    }
+
+    private boolean canModify(Task task) {
+        return isOwner(task);
     }
 
     private ResponseEntity<MessageResource> forbidden() {
         return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                .body(new MessageResource("Only the task's creator (emprendedor) can perform this action"));
+                .body(new MessageResource("No tienes permisos para realizar esta acción"));
     }
+
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 CREATE - POST /api/v1/tasks
+    // ═══════════════════════════════════════════════════════════════════
 
     @PostMapping
     @Operation(summary = "Create a task (emprendedor only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "201", description = "Task created",
-                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
-            @ApiResponse(responseCode = "400", description = "Invalid request"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     public ResponseEntity<TaskResource> createTask(@RequestBody CreateTaskResource resource) {
-        // creatorId always comes from the authenticated user, never trusted from the request body
         var command = CreateTaskCommandFromResourceAssembler.toCommandFromResource(
                 resource, String.valueOf(getCurrentUserId()));
         var result = commandService.handle(command);
@@ -117,37 +135,31 @@ public class TasksController {
                 .orElse(ResponseEntity.badRequest().build());
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 GET BY ID - GET /api/v1/tasks/{id}
+    // ═══════════════════════════════════════════════════════════════════
+
     @GetMapping("/{id}")
-    @Operation(summary = "Get task by id (emprendedor/creator only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task found",
-                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    public ResponseEntity<?> getTaskById(
-            @PathVariable @Parameter(description = "Task id", required = true) Long id) {
+    public ResponseEntity<?> getTaskById(@PathVariable Long id) {
+        System.out.println("🔍 [BACKEND] getTaskById called with id: " + id);
         Optional<Task> taskOpt = queryService.handle(new GetTaskByIdQuery(id));
         if (taskOpt.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!isOwner(taskOpt.get())) {
+        if (!canView(taskOpt.get())) {
             return forbidden();
         }
         return ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(taskOpt.get()));
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 GET (QUERY PARAMS) - GET /api/v1/tasks?projectId=&assigneeId=
+    // ═══════════════════════════════════════════════════════════════════
+
     @GetMapping
-    @Operation(summary = "Get tasks by project, assignee, or both",
-            security = @SecurityRequirement(name = "bearerAuth"))
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Tasks retrieved"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     public ResponseEntity<List<TaskResource>> getTasks(
-            @RequestParam(required = false) @Parameter(description = "Filter by project id") String projectId,
-            @RequestParam(required = false) @Parameter(description = "Filter by assignee id") String assigneeId) {
+            @RequestParam(required = false) String projectId,
+            @RequestParam(required = false) String assigneeId) {
 
         List<TaskResource> resources;
 
@@ -167,23 +179,19 @@ public class TasksController {
         return ResponseEntity.ok(resources);
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 PATCH (EDITAR) - PATCH /api/v1/tasks/{id}
+    // ═══════════════════════════════════════════════════════════════════
+
     @PatchMapping("/{id}")
-    @Operation(summary = "Partially update a task (emprendedor/creator only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task updated",
-                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     public ResponseEntity<?> patchTask(
-            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @PathVariable Long id,
             @RequestBody PatchTaskResource resource) {
         Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
         if (existing.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!isOwner(existing.get())) {
+        if (!canModify(existing.get())) {
             return forbidden();
         }
 
@@ -193,23 +201,19 @@ public class TasksController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 RESCHEDULE - PATCH /api/v1/tasks/{id}/due-date
+    // ═══════════════════════════════════════════════════════════════════
+
     @PatchMapping("/{id}/due-date")
-    @Operation(summary = "Reschedule a task (change its due date) — emprendedor/creator only")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task rescheduled",
-                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     public ResponseEntity<?> rescheduleTask(
-            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @PathVariable Long id,
             @RequestBody RescheduleTaskResource resource) {
         Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
         if (existing.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!isOwner(existing.get())) {
+        if (!canModify(existing.get())) {
             return forbidden();
         }
 
@@ -220,47 +224,69 @@ public class TasksController {
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 COMPLETE - POST /api/v1/tasks/{id}/complete
+    // ═══════════════════════════════════════════════════════════════════
+
     @PostMapping("/{id}/complete")
-    @Operation(summary = "Complete a task with a delivery URL — emprendedor/creator only")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Task completed",
-                    content = @Content(schema = @Schema(implementation = TaskResource.class))),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "404", description = "Task not found"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
     public ResponseEntity<?> completeTask(
-            @PathVariable @Parameter(description = "Task id", required = true) Long id,
+            @PathVariable Long id,
             @RequestBody CompleteTaskResource resource) {
+
+        System.out.println("🔍 [BACKEND] completeTask called with id: " + id);
+
         Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
         if (existing.isEmpty()) {
+            System.out.println("❌ [BACKEND] Task not found");
             return ResponseEntity.notFound().build();
         }
-        if (!isOwner(existing.get())) {
+
+        Task task = existing.get();
+        Long currentUserId = getCurrentUserId();
+        String currentUserIdStr = String.valueOf(currentUserId);
+
+        // ✅ VERIFICACIÓN DIRECTA - SIN LLAMAR A OTROS MÉTODOS
+        boolean isOwner = task.getCreatorId() != null && task.getCreatorId().equals(currentUserIdStr);
+        boolean isAssignee = task.getAssigneeId() != null && task.getAssigneeId().equals(currentUserIdStr);
+
+        System.out.println("🔍 [completeTask] ======================================");
+        System.out.println("🔍 [completeTask] creatorId: " + task.getCreatorId());
+        System.out.println("🔍 [completeTask] assigneeId: " + task.getAssigneeId());
+        System.out.println("🔍 [completeTask] currentUserId: " + currentUserIdStr);
+        System.out.println("🔍 [completeTask] isOwner: " + isOwner);
+        System.out.println("🔍 [completeTask] isAssignee: " + isAssignee);
+        System.out.println("🔍 [completeTask] PERMITIDO: " + (isOwner || isAssignee));
+        System.out.println("🔍 [completeTask] ======================================");
+
+        // ✅ PERMITIR si es el creador O el asignado
+        if (!isOwner && !isAssignee) {
+            System.out.println("❌ [completeTask] Usuario NO autorizado");
             return forbidden();
         }
+
+        System.out.println("✅ [completeTask] Usuario autorizado, completando tarea...");
 
         var command = new PatchTaskCommand(id, null, null, null, null, null, null, null,
                 TaskStatus.COMPLETED, resource.deliveryUrl(), resource.deliveryNotes());
         return commandService.handle(command)
-                .map(task -> ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(task)))
+                .map(updatedTask -> {
+                    System.out.println("✅ [BACKEND] Task completed successfully: " + updatedTask.getId());
+                    return ResponseEntity.ok(TaskResourceFromEntityAssembler.toResourceFromEntity(updatedTask));
+                })
                 .orElse(ResponseEntity.notFound().build());
     }
 
+    // ═══════════════════════════════════════════════════════════════════
+    // 📌 DELETE - DELETE /api/v1/tasks/{id}
+    // ═══════════════════════════════════════════════════════════════════
+
     @DeleteMapping("/{id}")
-    @Operation(summary = "Delete a task (emprendedor/creator only)")
-    @ApiResponses(value = {
-            @ApiResponse(responseCode = "204", description = "Task deleted"),
-            @ApiResponse(responseCode = "403", description = "Forbidden"),
-            @ApiResponse(responseCode = "401", description = "Unauthorized")
-    })
-    public ResponseEntity<?> deleteTask(
-            @PathVariable @Parameter(description = "Task id", required = true) Long id) {
+    public ResponseEntity<?> deleteTask(@PathVariable Long id) {
         Optional<Task> existing = queryService.handle(new GetTaskByIdQuery(id));
         if (existing.isEmpty()) {
             return ResponseEntity.notFound().build();
         }
-        if (!isOwner(existing.get())) {
+        if (!canModify(existing.get())) {
             return forbidden();
         }
 
