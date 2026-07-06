@@ -1,6 +1,5 @@
 package com.foundly.foundlyplatform.profiles.interfaces;
 
-
 import com.foundly.foundlyplatform.profiles.application.internal.commands.PatchProfileCommand;
 import com.foundly.foundlyplatform.profiles.application.internal.commands.ProfileCommandService;
 import com.foundly.foundlyplatform.profiles.application.internal.commands.UpdateProfileCommand;
@@ -18,6 +17,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
@@ -49,6 +49,7 @@ public class ProfilesController {
 
     // GET /api/v1/profiles
     @GetMapping
+    @Transactional
     public ResponseEntity<List<ProfileResource>> getAllProfiles() {
         var profiles = profileQueryService.getAllProfiles()
                 .stream()
@@ -59,6 +60,7 @@ public class ProfilesController {
 
     // GET /api/v1/profiles/{id}
     @GetMapping("/{id}")
+    @Transactional
     public ResponseEntity<ProfileResource> getProfileById(@PathVariable Long id) {
         return profileQueryService.handle(new GetProfileByIdQuery(id))
                 .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
@@ -68,6 +70,7 @@ public class ProfilesController {
 
     // GET /api/v1/profiles/user/{userId}
     @GetMapping("/user/{userId}")
+    @Transactional
     public ResponseEntity<ProfileResource> getProfileByUserId(@PathVariable Long userId) {
         return profileQueryService.handle(new GetProfileByUserIdQuery(userId))
                 .map(ProfileResourceFromEntityAssembler::toResourceFromEntity)
@@ -116,6 +119,4 @@ public class ProfilesController {
         profileCommandService.deleteProfile(id);
         return ResponseEntity.noContent().build();
     }
-
 }
-

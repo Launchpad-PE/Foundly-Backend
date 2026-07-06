@@ -18,27 +18,37 @@ public class ProfileQueryServiceImpl implements ProfileQueryService {
     }
 
     @Override
-    public Optional<Profile> handle(GetProfileByIdQuery query) {
-        return profileRepository.findById(query.profileId());
-    }
-
-    @Override
     @Transactional  // ✅ AGREGAR ESTO
-    public Optional<Profile> handle(GetProfileByUserIdQuery query) {
-        Optional<Profile> profile = profileRepository.findByUserId(query.userId());
+    public Optional<Profile> handle(GetProfileByIdQuery query) {
+        Optional<Profile> profile = profileRepository.findById(query.profileId());
 
-        // ✅ Forzar carga de las colecciones dentro de la transacción
+        // ✅ Forzar carga de colecciones
         profile.ifPresent(p -> {
-            p.getExperiences().size();  // Forzar carga de experiencias
-            p.getSkills().size();       // Forzar carga de habilidades
-            p.getFavoriteProjectIds().size(); // Forzar carga de favoritos
+            p.getExperiences().size();
+            p.getSkills().size();
+            p.getFavoriteProjectIds().size();
         });
 
         return profile;
     }
 
     @Override
-    @Transactional  // ✅ AGREGAR ESTO
+    @Transactional
+    public Optional<Profile> handle(GetProfileByUserIdQuery query) {
+        Optional<Profile> profile = profileRepository.findByUserId(query.userId());
+
+        // ✅ Forzar carga de las colecciones dentro de la transacción
+        profile.ifPresent(p -> {
+            p.getExperiences().size();
+            p.getSkills().size();
+            p.getFavoriteProjectIds().size();
+        });
+
+        return profile;
+    }
+
+    @Override
+    @Transactional
     public List<Profile> getAllProfiles() {
         List<Profile> profiles = profileRepository.findAll();
 
