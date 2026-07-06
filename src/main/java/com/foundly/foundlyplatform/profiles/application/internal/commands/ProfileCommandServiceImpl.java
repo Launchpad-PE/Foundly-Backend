@@ -59,6 +59,11 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     @Transactional
     public Optional<Profile> handle(PatchProfileCommand command) {
         return profileRepository.findById(command.profileId()).map(profile -> {
+            // ✅ AGREGAR ESTAS 3 LÍNEAS PARA FORZAR CARGA
+            profile.getExperiences().size();
+            profile.getSkills().size();
+            profile.getFavoriteProjectIds().size();
+
             if (command.username() != null)           profile.updateUsername(command.username());
             if (command.avatar() != null)             profile.updateAvatar(command.avatar());
             if (command.bio() != null)                profile.updateBio(command.bio());
