@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.*;
@@ -27,6 +28,7 @@ public class EnvironmentalController {
     }
 
     @GetMapping("/projects/{projectId}/dashboard")
+    @Transactional  // ✅ AGREGAR ESTO
     @Operation(summary = "Get environmental dashboard data for a project")
     public ResponseEntity<DashboardResource> getDashboard(
             @PathVariable String projectId,
@@ -43,7 +45,10 @@ public class EnvironmentalController {
         }
 
         Project project = projectOpt.get();
+
+        // ✅ Forzar carga de métricas
         List<EnvironmentalMetric> metrics = project.getEnvironmentalMetrics();
+        metrics.size(); // Forzar carga
 
         System.out.println("🔍 Métricas del proyecto: " + metrics);
 
@@ -70,6 +75,7 @@ public class EnvironmentalController {
     }
 
     @GetMapping("/projects/{projectId}/metrics")
+    @Transactional  // ✅ AGREGAR ESTO
     @Operation(summary = "Get available environmental metrics for a project")
     public ResponseEntity<List<String>> getMetrics(@PathVariable String projectId) {
         Optional<Project> projectOpt = projectRepository.findByProjectId(projectId);
@@ -81,6 +87,10 @@ public class EnvironmentalController {
         }
 
         Project project = projectOpt.get();
+
+        // ✅ Forzar carga de métricas
+        project.getEnvironmentalMetrics().size();
+
         List<String> metrics = project.getEnvironmentalMetrics().stream()
                 .map(Enum::name)
                 .collect(Collectors.toList());
@@ -96,7 +106,7 @@ public class EnvironmentalController {
         return ResponseEntity.ok(metrics);
     }
 
-    // ========== MÉTODOS PRIVADOS ==========
+    // ========== MÉTODOS PRIVADOS (SIN CAMBIOS) ==========
 
     private MetricCardResource generateMetricCard(EnvironmentalMetric metric) {
         double value = generateRealisticValue(metric);
