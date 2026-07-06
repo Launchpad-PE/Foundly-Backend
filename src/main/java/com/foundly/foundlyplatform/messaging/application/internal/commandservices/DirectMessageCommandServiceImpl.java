@@ -24,9 +24,18 @@ public class DirectMessageCommandServiceImpl implements DirectMessageCommandServ
 
     @Override
     public Result<DirectMessage, ApplicationError> handle(SendDirectMessageCommand command) {
+        System.out.println("📩 === RECIBIDO MENSAJE ===");
+        System.out.println("📩 senderId: " + command.senderId());
+        System.out.println("📩 recipientId: " + command.recipientId());
+        System.out.println("📩 content: " + command.content());
+        System.out.println("📩 senderId null? " + (command.senderId() == null));
+        System.out.println("📩 recipientId null? " + (command.recipientId() == null));
+
         if (command.senderId() == null || command.recipientId() == null) {
+            System.out.println("❌ Error: sender o recipient null");
             return Result.failure(ApplicationError.validationError("message", "Sender and recipient are required"));
         }
+
         if (command.senderId().equals(command.recipientId())) {
             return Result.failure(ApplicationError.validationError("recipient", "You cannot message yourself"));
         }

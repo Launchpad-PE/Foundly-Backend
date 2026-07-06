@@ -9,12 +9,6 @@ import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerCo
 
 /**
  * STOMP-over-WebSocket configuration for real-time direct messaging.
- *
- * <ul>
- *     <li>Handshake endpoint: {@code /ws} (clients connect here with the JWT).</li>
- *     <li>Receive messages by subscribing to {@code /user/queue/messages}.</li>
- *     <li>The server pushes with {@code convertAndSendToUser(userId, "/queue/messages", ...)}.</li>
- * </ul>
  */
 @Configuration
 @EnableWebSocketMessageBroker
@@ -28,7 +22,13 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        registry.addEndpoint("/ws")
+                .setAllowedOrigins(
+                        "http://localhost:4200",
+                        "http://127.0.0.1:4200",
+                        "https://foundly-frontend-production.up.railway.app"  // Cambia por tu URL de frontend
+                )
+                .withSockJS();  // ✅ Agregar soporte para SockJS
     }
 
     @Override
