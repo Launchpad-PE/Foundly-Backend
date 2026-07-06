@@ -51,7 +51,7 @@ public class OpenApiConfiguration {
         // AGREGADA LA URL DE RAILWAY
         openApi.servers(List.of(
                 new Server()
-                        .url("foundly-backend-production-eeec.up.railway.app")
+                        .url("https://foundly-backend-production-eeec.up.railway.app")
                         .description("Railway Production Environment")
         ));
 
