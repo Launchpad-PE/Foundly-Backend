@@ -93,8 +93,12 @@ public class WebSecurityConfiguration {
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.cors(configurer -> configurer.configurationSource(request -> {
             var cors = new CorsConfiguration();
-            cors.setAllowedOriginPatterns(List.of("*"));
-            cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
+            // ESPECIFICA LOS ORÍGENES EXACTOS
+            cors.setAllowedOrigins(List.of(
+                    "http://localhost:4200",           // Desarrollo local
+                    "http://127.0.0.1:4200",           // Alternativa local
+                    "https://tu-frontend-produccion.com" // Cuando esté en producción
+            ));            cors.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE"));
             cors.setAllowCredentials(true);
             return cors;
         }));
