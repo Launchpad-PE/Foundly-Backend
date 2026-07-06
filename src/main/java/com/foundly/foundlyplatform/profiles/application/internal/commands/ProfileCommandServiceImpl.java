@@ -6,6 +6,7 @@ import com.foundly.foundlyplatform.profiles.domain.model.valueobjects.Role;
 import com.foundly.foundlyplatform.profiles.domain.model.valueobjects.Username;
 import com.foundly.foundlyplatform.profiles.infrastructure.persistance.jpa.repositories.ProfileRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
@@ -19,6 +20,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     }
 
     @Override
+    @Transactional
     public Optional<Profile> handle(CreateProfileCommand command) {
         if (profileRepository.existsByUserId(command.userId()))
             throw new IllegalArgumentException("Ya existe un perfil para este usuario");
@@ -42,6 +44,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     }
 
     @Override
+    @Transactional
     public Optional<Profile> handle(UpdateProfileCommand command) {
         return profileRepository.findById(command.profileId()).map(profile -> {
             if (command.username() != null) profile.updateUsername(command.username());
@@ -53,6 +56,7 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
     }
 
     @Override
+    @Transactional
     public Optional<Profile> handle(PatchProfileCommand command) {
         return profileRepository.findById(command.profileId()).map(profile -> {
             if (command.username() != null)           profile.updateUsername(command.username());
@@ -61,13 +65,17 @@ public class ProfileCommandServiceImpl implements ProfileCommandService {
             if (command.role() != null)               profile.updateRole(command.role());
             if (command.skills() != null)             profile.updateSkills(command.skills());
             if (command.experiences() != null)        profile.updateExperiences(command.experiences());
-            if (command.favoriteProjectIds() != null) profile.updateFavoriteProjectIds(command.favoriteProjectIds());
+            if (command.favoriteProjectIds() != null) {
+                System.out.println("📌 Actualizando favoritos: " + command.favoriteProjectIds());
+                profile.updateFavoriteProjectIds(command.favoriteProjectIds());
+            }
             if (command.isComplete() != null)         profile.setComplete(command.isComplete());
             return profileRepository.save(profile);
         });
     }
 
     @Override
+    @Transactional
     public void deleteProfile(Long profileId) {
         if (!profileRepository.existsById(profileId))
             throw new IllegalArgumentException("Perfil no encontrado con id: " + profileId);
