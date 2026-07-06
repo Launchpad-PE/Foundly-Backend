@@ -30,16 +30,8 @@ public class OpenApiConfiguration {
     @Value("${documentation.application.version}")
     String applicationVersion;
 
-    // Methods
-
-    /**
-     * Builds the OpenAPI document used by Swagger UI and client generation tools.
-     *
-     * @return configured OpenAPI descriptor
-     */
     @Bean
     public OpenAPI foundlyPlatformOpenApi() {
-        // General configuration
         var openApi = new OpenAPI();
         openApi.info(new Info()
                         .title(this.applicationName)
@@ -56,20 +48,13 @@ public class OpenApiConfiguration {
                         .description("Foundly Platform wiki Documentation")
                         .url("https://Foundly-platform.wiki.github.io/docs"));
 
-        // Add server configurations
+        // AGREGADA LA URL DE RAILWAY
         openApi.servers(List.of(
                 new Server()
-                        .url("http://localhost:8080")
-                        .description("Local Development Environment"),
-                new Server()
-                        .url("https://staging-api.foundly.com")
-                        .description("Staging Environment"),
-                new Server()
-                        .url("https://api.foundly.com")
-                        .description("Production Environment")
+                        .url("")
+                        .description("Railway Production Environment")
         ));
 
-        // Add a security scheme
         final String securitySchemeName = "bearerAuth";
 
         openApi.addSecurityItem(new SecurityRequirement()
