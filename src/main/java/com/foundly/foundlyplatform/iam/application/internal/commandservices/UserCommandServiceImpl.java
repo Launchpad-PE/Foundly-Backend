@@ -35,7 +35,10 @@ public class UserCommandServiceImpl implements UserCommandService {
     @Override
     public Result<ImmutablePair<User, String>, ApplicationError> handle(SignInCommand command) {
         log.info("🔐 Intentando login para: {}", command.username());
-        var user = userRepository.findByUsername(command.username());
+
+        // ✅ CAMBIO IMPORTANTE: Buscar por EMAIL
+        var user = userRepository.findByEmail(command.username());
+
         if (user.isEmpty()) {
             log.warn("❌ Usuario no encontrado: {}", command.username());
             return Result.failure(ApplicationError.notFound("User", command.username()));
@@ -56,6 +59,12 @@ public class UserCommandServiceImpl implements UserCommandService {
         if (userRepository.existsByUsername(command.username())) {
             log.warn("❌ Username ya existe: {}", command.username());
             return Result.failure(ApplicationError.conflict("User", "Username already exists"));
+        }
+
+        // ✅ También validar que el email no exista
+        if (userRepository.findByEmail(command.email()).isPresent()) {
+            log.warn("❌ Email ya existe: {}", command.email());
+            return Result.failure(ApplicationError.conflict("User", "Email already exists"));
         }
 
         var roles = command.roles().stream()
