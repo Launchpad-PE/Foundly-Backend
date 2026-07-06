@@ -8,6 +8,7 @@ import com.foundly.foundlyplatform.projects.interfaces.rest.resources.DashboardR
 import com.foundly.foundlyplatform.projects.interfaces.rest.resources.MetricCardResource;
 import com.foundly.foundlyplatform.projects.interfaces.rest.resources.MetricTrendResource;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ public class EnvironmentalQueryService {
         this.projectRepository = projectRepository;
     }
 
+    @Transactional  // ✅ AGREGAR ESTO
     public DashboardResource getDashboardData(String projectId, int days) {
         System.out.println("🔍 [EnvironmentalQueryService] Buscando proyecto: " + projectId);
 
@@ -33,7 +35,10 @@ public class EnvironmentalQueryService {
         }
 
         Project project = projectOpt.get();
+
+        // ✅ Forzar carga de métricas
         List<EnvironmentalMetric> metrics = project.getEnvironmentalMetrics();
+        metrics.size(); // Forzar carga
 
         System.out.println("🔍 [EnvironmentalQueryService] Métricas del proyecto: " + metrics);
         System.out.println("🔍 [EnvironmentalQueryService] Cantidad de métricas: " + (metrics != null ? metrics.size() : 0));
@@ -59,6 +64,7 @@ public class EnvironmentalQueryService {
         return new DashboardResource(metricCards, trends, alerts);
     }
 
+    @Transactional  // ✅ AGREGAR ESTO
     public List<String> getAvailableMetrics(String projectId) {
         Optional<Project> projectOpt = projectRepository.findByProjectId(projectId);
 
@@ -67,10 +73,16 @@ public class EnvironmentalQueryService {
         }
 
         Project project = projectOpt.get();
+
+        // ✅ Forzar carga de métricas
+        project.getEnvironmentalMetrics().size();
+
         return project.getEnvironmentalMetrics().stream()
                 .map(Enum::name)
                 .collect(Collectors.toList());
     }
+
+    // ========== MÉTODOS PRIVADOS (SIN CAMBIOS) ==========
 
     private MetricCardResource generateMetricCard(EnvironmentalMetric metric) {
         double value = generateRealisticValue(metric);
@@ -92,13 +104,13 @@ public class EnvironmentalQueryService {
     private double generateRealisticValue(EnvironmentalMetric metric) {
         switch (metric) {
             case AIR_QUALITY:
-                return 50 + random.nextInt(80); // 50-130 AQI
+                return 50 + random.nextInt(80);
             case HUMIDITY:
-                return 40 + random.nextInt(50); // 40-90%
+                return 40 + random.nextInt(50);
             case TEMPERATURE:
-                return 15 + random.nextInt(20); // 15-35°C
+                return 15 + random.nextInt(20);
             case CITIZEN_PARTICIPATION:
-                return 50 + random.nextInt(150); // 50-200 reportes
+                return 50 + random.nextInt(150);
             default:
                 return 50 + random.nextInt(50);
         }
@@ -194,7 +206,6 @@ public class EnvironmentalQueryService {
             }
         }
 
-        // Agregar alerta verde si todo está bien
         if (alerts.isEmpty() && !metrics.isEmpty()) {
             alerts.add(new AlertResource(
                     "green",
