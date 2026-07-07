@@ -26,7 +26,7 @@ public class WebSocketConfiguration implements WebSocketMessageBrokerConfigurer 
                 .setAllowedOrigins(
                         "http://localhost:4200",
                         "http://127.0.0.1:4200",
-                        "https://foundly-frontend-production.up.railway.app"  // Cambia por tu URL de frontend
+                        "https://foundly-pi.vercel.app"  // Cambia por tu URL de frontend
                 )
                 .withSockJS();  // ✅ Agregar soporte para SockJS
     }
